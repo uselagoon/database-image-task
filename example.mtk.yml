@@ -1,0 +1,37 @@
+rewrite:
+  # Drupal 8
+  users_field_data:
+    mail: concat(uid, "@SANITISED")
+    pass: '"SANITIZED_PASSWORD"'
+    # We don't allow no dirty names around here!
+    name: concat(uid, "-SANITISED")
+    init: '"SANITISED_INIT"'
+  # Drupal 7
+  users:
+    mail: concat(uid, "@SANITISED")
+    pass: '"SANITIZED_PASSWORD"'
+
+where:
+  # Only include body field data for current revisions.
+  node_revision__body: |-
+      revision_id IN (SELECT vid FROM node)
+
+nodata:
+  - cache*
+  - captcha_sessions
+  - history
+  - flood
+  - batch
+  - queue
+  - sessions
+  - semaphore
+  - search_api_task
+  - search_dataset
+  - search_index
+  - search_total
+  - watchdog
+  - webform_submission_data
+
+ignore:
+  - __ACQUIA_MONITORING__
+

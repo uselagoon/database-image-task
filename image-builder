@@ -1,0 +1,280 @@
+#!/bin/bash
+
+
+# parser supports the following transformations
+# 	project = LAGOON_PROJECT
+# 	environment = LAGOON_ENVIRONMENT
+# 	organization = BUILDER_REGISTRY_ORGANIZATION
+# 	registry = BUILDER_REGISTRY_HOST
+# 	service = BUILDER_DOCKER_COMPOSE_SERVICE_NAME
+# which allow you to define the BUILDER_BACKUP_IMAGE_NAME like so '${registry}/${organization}/${project}/${service}-data' using a featureflag at the cluster level
+
+function patternParser {
+    PATTERN_PARTS=${1}
+    re='(.*)\$\{service\}(.*)'
+    if [[ $PATTERN_PARTS =~ $re ]]; then
+        PATTERN_PARTS2=${BASH_REMATCH[1]}${BUILDER_DOCKER_COMPOSE_SERVICE_NAME}
+        PATTERN_PARTS=${PATTERN_PARTS2}${BASH_REMATCH[2]}
+    fi
+    re='(.*)\$\{registry\}(.*)'
+    if [[ $PATTERN_PARTS =~ $re ]]; then
+        PATTERN_PARTS2=${BASH_REMATCH[1]}${BUILDER_REGISTRY_HOST}
+        PATTERN_PARTS=${PATTERN_PARTS2}${BASH_REMATCH[2]}
+    fi
+    re='(.*)\$\{organization\}(.*)'
+    if [[ $PATTERN_PARTS =~ $re ]]; then
+        PATTERN_PARTS2=${BASH_REMATCH[1]}${BUILDER_REGISTRY_ORGANIZATION}
+        PATTERN_PARTS=${PATTERN_PARTS2}${BASH_REMATCH[2]}
+    fi
+    re='(.*)\$\{project\}(.*)'
+    if [[ $PATTERN_PARTS =~ $re ]]; then
+        PATTERN_PARTS2=${BASH_REMATCH[1]}${LAGOON_PROJECT}
+        PATTERN_PARTS=${PATTERN_PARTS2}${BASH_REMATCH[2]}
+    fi
+    re='(.*)\$\{environment\}(.*)'
+    if [[ $PATTERN_PARTS =~ $re ]]; then
+        PATTERN_PARTS2=${BASH_REMATCH[1]}${LAGOON_ENVIRONMENT}
+        PATTERN_PARTS=${PATTERN_PARTS2}${BASH_REMATCH[2]}
+    fi
+
+	echo $PATTERN_PARTS
+}
+
+# from build-deploy-tool legacy bash
+# featureFlag searches for feature flag variables in the following locations
+# and order:
+#
+# 1. The cluster-force feature flag, prefixed with LAGOON_FEATURE_FLAG_FORCE_,
+#    as a build pod environment variable. This is set via a flag on the
+#    build-deploy controller. This overrides the other variables and allows
+#    policy enforcement at the cluster level.
+#
+# 2. The regular feature flag, prefixed with LAGOON_FEATURE_FLAG_, in the
+#    Lagoon environment global scoped env-vars. This allows policy control at
+#    the environment level.
+#
+# 3. The regular feature flag, prefixed with LAGOON_FEATURE_FLAG_, in the
+#    Lagoon project global scoped env-vars. This allows policy control at the
+#    project level.
+#
+# 4. The cluster-default feature flag, prefixed with
+#    LAGOON_FEATURE_FLAG_DEFAULT_, as a build pod environment variable. This is
+#    set via a flag on the build-deploy controller. This allows default policy
+#    to be set at the cluster level, but maintains the ability to selectively
+#    override at the project or environment level.
+#
+# The value of the first variable found is printed to stdout. If the variable
+# is not found, print an empty string. Additional arguments are ignored.
+function featureFlag() {
+	# check for argument
+	[ "$1" ] || return
+
+	local forceFlagVar defaultFlagVar flagVar
+
+	# check build pod environment for the force policy first
+	forceFlagVar="LAGOON_FEATURE_FLAG_FORCE_$1"
+	[ "${!forceFlagVar}" ] && echo "${!forceFlagVar}" && return
+
+	flagVar="LAGOON_FEATURE_FLAG_$1"
+	# check Lagoon environment variables (this includes project variables too if they are in the deployed environment)
+	flagValue=$(jq -r '.[] | select(.scope == "global" and .name == "'"$flagVar"'") | .value' <<<"$LAGOON_ENVIRONMENT_VARIABLES")
+	[ "$flagValue" ] && echo "$flagValue" && return
+	# check Lagoon project variables
+	flagValue=$(jq -r '.[] | select(.scope == "global" and .name == "'"$flagVar"'") | .value' <<<"$LAGOON_PROJECT_VARIABLES")
+	[ "$flagValue" ] && echo "$flagValue" && return
+	[ "${!flagVar}" ] && echo "${!flagVar}" && return # if task variables doesn't make it in, fall back to just checking the pod (for now)
+
+	# fall back to the default, if set.
+	defaultFlagVar="LAGOON_FEATURE_FLAG_DEFAULT_$1"
+	echo "${!defaultFlagVar}"
+}
+
+# function to run down environment variable checks through the chain
+# featureflag -> api variables -> fallback value
+function projectEnvironmentVariableCheck() {
+	# check for argument
+	[ "$1" ] || return
+
+	local flagVar
+	flagVar="$1"
+
+	# do feature flag checks first
+	flagValue=$(featureFlag ${flagVar})
+	[ "$flagValue" ] && echo "$flagValue" && return
+	
+	# next check if the variable is in the json payload from an advanced task (this means the task has arguments that should override)
+	if [ "$3" ]; then
+		flagValue=$(echo "${JSON_PAYLOAD}" | base64 -d | jq -r '.'$1' // "'$3'"')
+	else 
+		flagValue=$(echo "${JSON_PAYLOAD}" | base64 -d | jq -r '.'$1' // empty')
+	fi
+	[ "$flagValue" ] && echo "$flagValue" && return
+
+	# next check if the variable exists in the variables from the API directly (requires support for this)
+	# check Lagoon environment variables
+	flagValue=$(jq -r '.[] | select(.name == "'"$flagVar"'") | .value' <<<"$LAGOON_ENVIRONMENT_VARIABLES")
+	[ "$flagValue" ] && echo "$flagValue" && return
+	# check Lagoon project variables
+	flagValue=$(jq -r '.[] | select(.name == "'"$flagVar"'") | .value' <<<"$LAGOON_PROJECT_VARIABLES")
+	[ "$flagValue" ] && echo "$flagValue" && return
+
+	# lastly fall back to the provided value (this could be from a variable in the configmap mounted to the container)
+	echo "$2"
+}
+
+echo "======================="
+echo "Starting image-builder"
+echo "======================="
+
+echo
+echo "=== Phase 1: variable setup ==="
+
+# this stores the service name that this image should run across, mariadb is the default
+BUILDER_DOCKER_COMPOSE_SERVICE_NAME=$(projectEnvironmentVariableCheck BUILDER_DOCKER_COMPOSE_SERVICE_NAME ${BUILDER_DOCKER_COMPOSE_SERVICE_NAME} "mariadb")
+# handle converting the service name to what Lagoon would set it to inside of Lagoon uppercased and transformed for other variables (db access variables)
+LAGOON_SERVICE_NAME=$(echo "$BUILDER_DOCKER_COMPOSE_SERVICE_NAME" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+
+# organization is a way to pass in an organization value that the image name parser can interpret
+BUILDER_REGISTRY_ORGANIZATION=$(projectEnvironmentVariableCheck BUILDER_REGISTRY_ORGANIZATION ${BUILDER_REGISTRY_ORGANIZATION})
+
+#optional DEFAULT mariadb:10.6
+BUILDER_IMAGE_NAME=$(projectEnvironmentVariableCheck BUILDER_IMAGE_NAME ${BUILDER_IMAGE_NAME} "mariadb:10.6")
+#optional DEFAULT uselagoon/mariadb-10.6-drupal:latest
+BUILDER_CLEAN_IMAGE_NAME=$(projectEnvironmentVariableCheck BUILDER_CLEAN_IMAGE_NAME ${BUILDER_CLEAN_IMAGE_NAME} "uselagoon/mariadb-10.6-drupal:latest")
+
+# eg LAGOON_FEATURE_FLAG_DEFAULT_BUILDER_BACKUP_IMAGE_NAME='${registry}/${organization}/${project}/${service}-drupal-data'
+BUILDER_BACKUP_IMAGE_NAME=$(projectEnvironmentVariableCheck BUILDER_BACKUP_IMAGE_NAME "${BUILDER_BACKUP_IMAGE_NAME}")
+
+# registry details
+BUILDER_REGISTRY_USERNAME=$(projectEnvironmentVariableCheck BUILDER_REGISTRY_USERNAME "${BUILDER_REGISTRY_USERNAME}")
+BUILDER_REGISTRY_PASSWORD=$(projectEnvironmentVariableCheck BUILDER_REGISTRY_PASSWORD "${BUILDER_REGISTRY_PASSWORD}")
+#optional
+BUILDER_REGISTRY_HOST=$(projectEnvironmentVariableCheck BUILDER_REGISTRY_HOST "${BUILDER_REGISTRY_HOST}")
+#optional
+BUILDER_DOCKER_HOST=$(projectEnvironmentVariableCheck BUILDER_DOCKER_HOST "${BUILDER_DOCKER_HOST}" "docker-host.lagoon-image-builder.svc")
+
+BUILDER_MTK_YAML_BASE64=$(projectEnvironmentVariableCheck BUILDER_MTK_YAML_BASE64 "${BUILDER_MTK_YAML_BASE64}")
+
+
+# check the pattern
+if [ -z $BUILDER_BACKUP_IMAGE_NAME ]; then
+	# default pattern to parse if no image provided
+	BUILDER_BACKUP_IMAGE_NAME=$(patternParser '${project}/${environment}')
+else
+	# parse the provided backup name to transform if required
+	BUILDER_BACKUP_IMAGE_NAME=$(patternParser $BUILDER_BACKUP_IMAGE_NAME)
+fi
+echo $BUILDER_BACKUP_IMAGE_NAME
+
+# error out if username and password aren't provided
+if [ -z $BUILDER_REGISTRY_USERNAME ]; then
+	echo "BUILDER_REGISTRY_USERNAME not defined"
+	exit 1
+fi
+if [ -z $BUILDER_REGISTRY_PASSWORD ]; then
+	echo "BUILDER_REGISTRY_PASSWORD not defined"
+	exit 1
+fi
+##### Phase 1: Set up all the initial variables
+
+# Generic variables
+date=`date -I`
+san_db_dump_filename="sanitised-dump.sql"
+san_db_tarfile="container-${date}.tar"
+backup_image_tag=${BUILDER_BACKUP_IMAGE_TAG:-"backup-${date}"}
+backup_image_full="${BUILDER_BACKUP_IMAGE_NAME}:${backup_image_tag}"
+
+
+##### Phase 2: MTK dump
+
+echo
+echo "=== Phase 2: MTK dump ==="
+
+# set the DB_X variables to what would be the lagoon service variable values, these are handled automatically from the LAGOON_SERVICE_NAME
+# these will use bash references later; eg: ${!DB_HOST}
+DB_HOST="${LAGOON_SERVICE_NAME}_HOST"
+DB_READREPLICA_HOSTS="${LAGOON_SERVICE_NAME}_READREPLICA_HOSTS"
+DB_USERNAME="${LAGOON_SERVICE_NAME}_USERNAME"
+DB_PASSWORD="${LAGOON_SERVICE_NAME}_PASSWORD"
+DB_DATABASE="${LAGOON_SERVICE_NAME}_DATABASE"
+
+# Picks one of the read replicas to use when dumping the database
+DB_HOSTNAME=`echo "${!DB_READREPLICA_HOSTS}" | perl -F, -ane '$index=int(rand(scalar(@F)));print $F[$index]'`
+# if `DB_HOSTNAME` is empty, then need to fall back to mariadb host
+if [ -z $DB_HOSTNAME ]; then
+    DB_HOSTNAME="${!DB_HOST}"
+fi
+
+# dump the MTK YAML to the mtk file if it has been provided, otherwise mtk will just dump the entire database as is
+if [ ! -z $BUILDER_MTK_YAML_BASE64 ]; then
+	echo $BUILDER_MTK_YAML_BASE64 | base64 -d > mtk.yml
+	export MTK_DUMP_CONFIG="mtk.yml"
+fi
+export MTK_DUMP_HOSTNAME="$DB_HOSTNAME"
+export MTK_DUMP_USERNAME="${!DB_USERNAME}"
+export MTK_DUMP_PASSWORD="${!DB_PASSWORD}"
+export MTK_DUMP_DATABASE="${!DB_DATABASE}"
+
+# Run MTK here
+mtk-dump > "$san_db_dump_filename"
+
+##### Phase 3: Make container with sanitised DB
+
+echo
+echo "=== Phase 3: Make container with sanitised DB ==="
+
+## using docker-host in lagoon, perhaps use a different dockerhost for this
+export DOCKER_HOST=${BUILDER_DOCKER_HOST}
+
+DOCKER_HOST_COUNTER=1
+DOCKER_HOST_TIMEOUT=10
+until docker -H ${DOCKER_HOST} info &> /dev/null
+do
+if [ $DOCKER_HOST_COUNTER -lt $DOCKER_HOST_TIMEOUT ]; then
+    let DOCKER_HOST_COUNTER=DOCKER_HOST_COUNTER+1
+    echo "${DOCKER_HOST} not available yet, waiting for 5 secs"
+    sleep 5
+else
+    echo "could not connect to ${DOCKER_HOST}"
+    exit 1
+fi
+done
+
+# BUILDER_IMAGE_NAME is the upstream mariadb as it has support for importing in a particular way
+# CLEAN_IMAGE_NAME is the lagoon database image used to copy the imported database into
+# BACKUP_IMAGE_NAME is the resulting built image to be tagged and pushed (eg quay.io/myproject/image)
+# BACKUP_IMAGE_TAG is optional and will default to `backup-${date}`
+# these have to be the same base `mariadb` version to work (ie mariadb:10.6 as the builder, and uselagoon/mariadb-10.6-drupal:latest as the clean resulting image)
+
+# build the image
+docker build --network=host --build-arg BUILDER_IMAGE="${BUILDER_IMAGE_NAME}" --build-arg CLEAN_IMAGE="${BUILDER_CLEAN_IMAGE_NAME}" -t ${backup_image_full} .
+
+##### Phase 4: Save new container to registry
+
+echo
+echo "=== Phase 4: Save new container to registry ==="
+
+# Log in to dockerhub or other registry
+
+# Reading credentials order is:
+# -	${XDG_RUNTIME_DIR}/containers/auth.json (and writing)
+# -	$HOME/.docker/config.json
+
+# BUILDER_REGISTRY_USERNAME is the name to log in to the registry
+# BUILDER_REGISTRY_PASSWORD is the password of the user
+# BUILDER_REGISTRY_HOST is required if not using dockerhub, eg: `quay.io`
+
+if [ -z $BUILDER_REGISTRY_HOST ]; then
+docker-login --password-stdin --username "$BUILDER_REGISTRY_USERNAME"
+else
+docker-login ${BUILDER_REGISTRY_HOST} --password-stdin --username "$BUILDER_REGISTRY_USERNAME"
+fi
+
+# Push the image to remote
+docker push "${backup_image_full}"
+
+echo
+echo "========================"
+echo "Finishing image-builder"
+echo "========================"
+

@@ -1,0 +1,78 @@
+mutation createDumpSanitisedDB {
+	addAdvancedTaskDefinition(
+		input:{
+			name: "Dump Sanitised Database"
+			description: "Make a sanitised database dump that can be used for development, or for automated upgrades"
+			confirmationText: "Are you sure you wish to create a sanitised database dump now?"
+			type: IMAGE
+			permission: MAINTAINER
+			image: "uselagoon/database-image-task:latest"
+			project: 123
+			advancedTaskDefinitionArguments: [
+				{
+					name: "BUILDER_DOCKER_COMPOSE_SERVICE_NAME",
+					displayName: "The name of the docker-compose service to backup",
+					type: STRING
+				},
+				{
+					name: "BUILDER_IMAGE_NAME",
+					displayName: "The name of the builder source image (eg, mariadb:10.6)",
+					type: STRING
+				},
+				{
+					name: "BUILDER_CLEAN_IMAGE_NAME",
+					displayName: "The name of the clean source image (eg, uselagoon/mariadb-10.6-drupal:latest)",
+					type: STRING
+				},
+				{
+					name: "BUILDER_BACKUP_IMAGE_NAME",
+					displayName: "The name of the resulting image to build without tag (eg, for dockerhub myproject/image, or for custom registry quay.io/myproject/image, can also be a pattern like '${registry}/${organization}/${project}/${environment}/${service}-data')",
+					type: STRING
+				},
+				{
+					name: "BUILDER_MTK_YAML_BASE64",
+					displayName: "The base64 encoded value of the mtk dump file to use",
+					type: STRING
+				},
+				{
+					name: "BUILDER_REGISTRY_USERNAME",
+					displayName: "The username to log in to registry with",
+					type: STRING
+				},
+				{
+					name: "BUILDER_REGISTRY_PASSWORD",
+					displayName: "The password to log in to registry with",
+					type: STRING
+				},
+				{
+					name: "BUILDER_REGISTRY_HOST",
+					displayName: "OPTIONAL: If not using dockerhub, define the registry to use (eg quay.io)",
+					type: STRING
+				},
+				{
+					name: "BUILDER_REGISTRY_HOST",
+					displayName: "OPTIONAL: If not using dockerhub, define the registry to use (eg quay.io)",
+					type: STRING
+				},
+				{
+					name: "BUILDER_REGISTRY_ORGANIZATION",
+					displayName: "OPTIONAL: if you want to provide an organization base for the backup image name to parse",
+					type: STRING
+				}
+			]
+		}
+	){
+		... on AdvancedTaskDefinitionImage {
+			id
+			name
+			description
+			image
+			confirmationText
+			advancedTaskDefinitionArguments {
+				type
+				name
+				displayName
+			}
+		}
+	}
+}

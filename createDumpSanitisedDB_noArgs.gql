@@ -1,0 +1,26 @@
+mutation createDumpSanitisedDB {
+	addAdvancedTaskDefinition(
+		input:{
+			name: "Dump Sanitised Database"
+			description: "Make a sanitised database dump that can be used for development, or for automated upgrades"
+			confirmationText: "Are you sure you wish to create a sanitised database dump now?"
+			type: IMAGE
+			permission: MAINTAINER
+			image: "uselagoon/database-image-task:latest"
+			project: 123
+		}
+	){
+		... on AdvancedTaskDefinitionImage {
+			id
+			name
+			description
+			image
+			confirmationText
+			advancedTaskDefinitionArguments {
+				type
+				name
+				displayName
+			}
+		}
+	}
+}
