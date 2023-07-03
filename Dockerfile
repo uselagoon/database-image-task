@@ -33,16 +33,16 @@ RUN mkdir $HOME/.docker
 # Put in needed scripts (in reverse order of mutability
 COPY image-builder-entry /usr/local/bin/image-builder-entry
 COPY docker-login /usr/local/bin/docker-login
-COPY image-builder /usr/local/bin/image-builder
+COPY mariadb-image-builder /usr/local/bin/mariadb-image-builder
 
 WORKDIR /builder
 
-COPY builder/Dockerfile /builder/Dockerfile
+COPY builder/mariadb.Dockerfile /builder/mariadb.Dockerfile
 
-RUN chmod a+x /usr/local/bin/image-builder /usr/local/bin/docker-login /usr/local/bin/mtk-dump /usr/local/bin/image-builder-entry
+RUN chmod a+x /usr/local/bin/mariadb-image-builder /usr/local/bin/docker-login /usr/local/bin/mtk-dump /usr/local/bin/image-builder-entry
 
 # Ensure the syntax is correct bash before actually pushing, etc
-RUN bash -n /usr/local/bin/image-builder
+RUN bash -n /usr/local/bin/mariadb-image-builder
 
 # Set up what to run
 ENTRYPOINT ["/sbin/tini", "--", "/lagoon/entrypoints.bash"]
