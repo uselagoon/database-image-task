@@ -50,11 +50,6 @@ mutation createDumpSanitisedDB {
 					type: STRING
 				},
 				{
-					name: "BUILDER_REGISTRY_HOST",
-					displayName: "OPTIONAL: If not using dockerhub, define the registry to use (eg quay.io)",
-					type: STRING
-				},
-				{
 					name: "BUILDER_REGISTRY_ORGANIZATION",
 					displayName: "OPTIONAL: if you want to provide an organization base for the backup image name to parse",
 					type: STRING
