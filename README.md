@@ -5,3 +5,24 @@ This is an image for use in a Lagoon advanced task to create a database containe
 Currently it only supports mysql/mariadb, but could eventually be extended to support other database systems.
 
 There are some requirements and other things that need to be called out for its usage. Some gotchas as well with variable names that may prevent multiple versions working properly that may need revisting.
+
+## MTK config
+
+The mtk config file should be provided as a base64 encoded string, this allows for easier adding to the api to retain data
+
+```
+$ cat example.mtk.yml | base64
+cmV3cml0ZToKICAjIERydXBhbCA4CiAgdXNlcnNfZmllbGRfZGF0YToKICAgIG1haWw6IGNvbmNh
+dCh1aWQsICJAU0FOSVRJU0VEIikKICAgIHBhc3M6ICciU0FOSVRJWkVEX1BBU1NXT1JEIicKICAg
+ICMgV2UgZG9uJ3QgYWxsb3cgbm8gZGlydHkgbmFtZXMgYXJvdW5kIGhlcmUhCiAgICBuYW1lOiBj
+b25jYXQodWlkLCAiLVNBTklUSVNFRCIpCiAgICBpbml0OiAnIlNBTklUSVNFRF9JTklUIicKICAj
+IERydXBhbCA3CiAgdXNlcnM6CiAgICBtYWlsOiBjb25jYXQodWlkLCAiQFNBTklUSVNFRCIpCiAg
+ICBwYXNzOiAnIlNBTklUSVpFRF9QQVNTV09SRCInCgp3aGVyZToKICAjIE9ubHkgaW5jbHVkZSBi
+b2R5IGZpZWxkIGRhdGEgZm9yIGN1cnJlbnQgcmV2aXNpb25zLgogIG5vZGVfcmV2aXNpb25fX2Jv
+ZHk6IHwtCiAgICAgIHJldmlzaW9uX2lkIElOIChTRUxFQ1QgdmlkIEZST00gbm9kZSkKCm5vZGF0
+YToKICAtIGNhY2hlKgogIC0gY2FwdGNoYV9zZXNzaW9ucwogIC0gaGlzdG9yeQogIC0gZmxvb2QK
+ICAtIGJhdGNoCiAgLSBxdWV1ZQogIC0gc2Vzc2lvbnMKICAtIHNlbWFwaG9yZQogIC0gc2VhcmNo
+X2FwaV90YXNrCiAgLSBzZWFyY2hfZGF0YXNldAogIC0gc2VhcmNoX2luZGV4CiAgLSBzZWFyY2hf
+dG90YWwKICAtIHdhdGNoZG9nCiAgLSB3ZWJmb3JtX3N1Ym1pc3Npb25fZGF0YQoKaWdub3JlOgog
+IC0gX19BQ1FVSUFfTU9OSVRPUklOR19fCgo=
+```
