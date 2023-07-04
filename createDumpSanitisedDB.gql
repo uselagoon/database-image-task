@@ -1,8 +1,8 @@
 mutation createDumpSanitisedDB {
 	addAdvancedTaskDefinition(
 		input:{
-			name: "Dump Sanitised Database"
-			description: "Make a sanitised database dump that can be used for development, or for automated upgrades"
+			name: "Sanitised Database Image Build"
+			description: "Test making a sanitised database dump image"
 			confirmationText: "Are you sure you wish to create a sanitised database dump now?"
 			type: IMAGE
 			permission: MAINTAINER
@@ -11,17 +11,7 @@ mutation createDumpSanitisedDB {
 			advancedTaskDefinitionArguments: [
 				{
 					name: "BUILDER_DOCKER_COMPOSE_SERVICE_NAME",
-					displayName: "The name of the docker-compose service to backup",
-					type: STRING
-				},
-				{
-					name: "BUILDER_IMAGE_NAME",
-					displayName: "The name of the builder source image (eg, mariadb:10.6)",
-					type: STRING
-				},
-				{
-					name: "BUILDER_CLEAN_IMAGE_NAME",
-					displayName: "The name of the clean source image (eg, uselagoon/mariadb-10.6-drupal:latest)",
+					displayName: "OPTIONAL: The name of the docker-compose service to backup (defaults to mariadb)",
 					type: STRING
 				},
 				{
@@ -30,8 +20,18 @@ mutation createDumpSanitisedDB {
 					type: STRING
 				},
 				{
+					name: "BUILDER_IMAGE_NAME",
+					displayName: "OPTIONAL: The name of the builder source image to do the initial db import (defaults to mariadb:10.6)",
+					type: STRING
+				},
+				{
+					name: "BUILDER_CLEAN_IMAGE_NAME",
+					displayName: "OPTIONAL: The name of the clean source image that will be built into (defaults to uselagoon/mariadb-10.6-drupal:latest)",
+					type: STRING
+				},
+				{
 					name: "BUILDER_MTK_YAML_BASE64",
-					displayName: "The base64 encoded value of the mtk dump file to use",
+					displayName: "OPTIONAL: The base64 encoded value of the mtk dump file to use (defaults to no config)",
 					type: STRING
 				},
 				{
