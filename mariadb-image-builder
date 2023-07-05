@@ -265,11 +265,7 @@ echo "=== Phase 4: Save new container to registry ==="
 # BUILDER_REGISTRY_PASSWORD is the password of the user
 # BUILDER_REGISTRY_HOST is required if not using dockerhub, eg: `quay.io`
 
-if [ -z $BUILDER_REGISTRY_HOST ]; then
-docker-login --password-stdin --username "$BUILDER_REGISTRY_USERNAME"
-else
-docker-login ${BUILDER_REGISTRY_HOST} --password-stdin --username "$BUILDER_REGISTRY_USERNAME"
-fi
+echo $BUILDER_REGISTRY_PASSWORD | docker login ${BUILDER_REGISTRY_HOST} -u "$BUILDER_REGISTRY_USERNAME" --password-stdin
 
 # Push the image to remote
 docker push "${backup_image_full}"

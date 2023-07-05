@@ -32,14 +32,13 @@ RUN mkdir $HOME/.docker
 
 # Put in needed scripts (in reverse order of mutability
 COPY image-builder-entry /usr/local/bin/image-builder-entry
-COPY docker-login /usr/local/bin/docker-login
 COPY mariadb-image-builder /usr/local/bin/mariadb-image-builder
 
 WORKDIR /builder
 
 COPY builder/mariadb.Dockerfile /builder/mariadb.Dockerfile
 
-RUN chmod a+x /usr/local/bin/mariadb-image-builder /usr/local/bin/docker-login /usr/local/bin/mtk-dump /usr/local/bin/image-builder-entry
+RUN chmod a+x /usr/local/bin/mariadb-image-builder /usr/local/bin/mtk-dump /usr/local/bin/image-builder-entry
 
 # Ensure the syntax is correct bash before actually pushing, etc
 RUN bash -n /usr/local/bin/mariadb-image-builder
