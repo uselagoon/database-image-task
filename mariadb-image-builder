@@ -91,35 +91,42 @@ function featureFlag() {
 
 # function to run down environment variable checks through the chain
 # featureflag -> api variables -> fallback value
+#
+# Parameters are:
+# -	<name>	Name of variable to check
+# -	<value>	Current value of variable
+# -	<search key>	Search key to use when searching JSON
 function projectEnvironmentVariableCheck() {
-	# check for argument
-	[ "$1" ] || return
+	local flagVariableName="$1"
+	local existingValue="$2"
+	local jsonSearchKey="$3"
 
-	local flagVar
-	flagVar="$1"
+	# check for argument
+	[ "$flagVariableName" ] || return
 
 	# do feature flag checks first
-	flagValue=$(featureFlag ${flagVar})
+	flagValue=$(featureFlag ${flagVariableName})
 	[ "$flagValue" ] && echo "$flagValue" && return
-	
+
 	# next check if the variable is in the json payload from an advanced task (this means the task has arguments that should override)
-	if [ "$3" ]; then
-		flagValue=$(echo "${JSON_PAYLOAD}" | base64 -d | jq -r '.'$1' // "'$3'"')
-	else 
-		flagValue=$(echo "${JSON_PAYLOAD}" | base64 -d | jq -r '.'$1' // empty')
+	if [ -z "$jsonSearchKey" ]; then
+		jsonSearchKeyJq='empty'
+	else
+		jsonSearchKeyJq='"'$jsonSearchKey'"'
 	fi
+	flagValue=$(echo "${JSON_PAYLOAD}" | base64 -d | jq -r '.'$flagVariableName' // '$jsonSearchKeyJq)
 	[ "$flagValue" ] && echo "$flagValue" && return
 
 	# next check if the variable exists in the variables from the API directly (requires support for this)
 	# check Lagoon environment variables
-	flagValue=$(jq -r '.[] | select(.name == "'"$flagVar"'") | .value' <<<"$LAGOON_ENVIRONMENT_VARIABLES")
+	flagValue=$(jq -r '.[] | select(.name == "'"$flagVariableName"'") | .value' <<<"$LAGOON_ENVIRONMENT_VARIABLES")
 	[ "$flagValue" ] && echo "$flagValue" && return
 	# check Lagoon project variables
-	flagValue=$(jq -r '.[] | select(.name == "'"$flagVar"'") | .value' <<<"$LAGOON_PROJECT_VARIABLES")
+	flagValue=$(jq -r '.[] | select(.name == "'"$flagVariableName"'") | .value' <<<"$LAGOON_PROJECT_VARIABLES")
 	[ "$flagValue" ] && echo "$flagValue" && return
 
 	# lastly fall back to the provided value (this could be from a variable in the configmap mounted to the container)
-	echo "$2"
+	echo "$existingValue"
 }
 
 echo "======================="
