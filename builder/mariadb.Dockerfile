@@ -35,3 +35,6 @@ ARG CLEAN_IMAGE
 FROM ${CLEAN_IMAGE:-uselagoon/mariadb-10.6-drupal:latest}
 
 COPY --from=builder /initialized-db /var/lib/mysql
+
+RUN cp /var/lib/mysql/.my.cnf /etc/mysql/my.cnf
+
