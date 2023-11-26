@@ -6,53 +6,62 @@ mutation createDumpSanitisedDB {
 			confirmationText: "Are you sure you wish to create a sanitised database dump now?"
 			type: IMAGE
 			permission: MAINTAINER
-			image: "uselagoon/database-image-task:latest"
+			image: "uselagoon/database-image-task:v0.0.1"
 			project: 123
 			advancedTaskDefinitionArguments: [
 				{
 					name: "BUILDER_DOCKER_COMPOSE_SERVICE_NAME",
 					displayName: "OPTIONAL: The name of the docker-compose service to backup (defaults to mariadb)",
 					type: STRING
+					optional: true
 				},
 				{
 					name: "BUILDER_BACKUP_IMAGE_NAME",
 					displayName: "The name of the resulting image to build without tag (eg, for dockerhub myproject/image, or for custom registry quay.io/myproject/image, can also be a pattern like '${registry}/${organization}/${project}/${environment}/${service}-data')",
 					type: STRING
+					# defaultValue: "${registry}/${organization}/${project}/${environment}/${service}-data"
 				},
 				{
 					name: "BUILDER_IMAGE_NAME",
 					displayName: "OPTIONAL: The name of the builder source image to do the initial db import (defaults to mariadb:10.6)",
 					type: STRING
+					optional: true
 				},
 				{
 					name: "BUILDER_CLEAN_IMAGE_NAME",
 					displayName: "OPTIONAL: The name of the clean source image that will be built into (defaults to uselagoon/mariadb-10.6-drupal:latest)",
 					type: STRING
+					optional: true
 				},
 				{
 					name: "BUILDER_MTK_YAML_BASE64",
 					displayName: "OPTIONAL: The base64 encoded value of the mtk dump file to use (defaults to no config)",
 					type: STRING
+					optional: true
 				},
 				{
 					name: "BUILDER_REGISTRY_USERNAME",
 					displayName: "The username to log in to registry with",
 					type: STRING
+					# defaultValue: "username"
 				},
 				{
 					name: "BUILDER_REGISTRY_PASSWORD",
 					displayName: "The password to log in to registry with",
 					type: STRING
+					# defaultValue: "password"
 				},
 				{
 					name: "BUILDER_REGISTRY_HOST",
 					displayName: "OPTIONAL: If not using dockerhub, define the registry to use (eg quay.io)",
 					type: STRING
+					optional: true
 				},
 				{
 					name: "BUILDER_REGISTRY_ORGANIZATION",
 					displayName: "OPTIONAL: if you want to provide an organization base for the backup image name to parse",
 					type: STRING
+					optional: true
 				}
 			]
 		}

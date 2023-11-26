@@ -6,7 +6,7 @@ mutation createDumpSanitisedDB {
 			confirmationText: "Are you sure you wish to create a sanitised database dump now?"
 			type: IMAGE
 			permission: MAINTAINER
-			image: "uselagoon/database-image-task:latest"
+			image: "uselagoon/database-image-task:v0.0.1"
 			project: 123
 		}
 	){
