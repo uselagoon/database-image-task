@@ -163,7 +163,7 @@ BUILDER_DOCKER_HOST=$(projectEnvironmentVariableCheck BUILDER_DOCKER_HOST "${BUI
 BUILDER_MTK_YAML_BASE64=$(projectEnvironmentVariableCheck BUILDER_MTK_YAML_BASE64 "${BUILDER_MTK_YAML_BASE64}")
 
 # optional
-BUILDER_ONLY_LATEST=$(projectEnvironmentVariableCheck BUILDER_ONLY_LATEST "0")
+BUILDER_PUSH_TAGS=$(projectEnvironmentVariableCheck BUILDER_PUSH_TAGS "both")
 
 # check the pattern
 if [ -z $BUILDER_BACKUP_IMAGE_NAME ]; then
@@ -277,8 +277,11 @@ echo "=== Phase 4: Save new container to registry ==="
 echo $BUILDER_REGISTRY_PASSWORD | docker login ${BUILDER_REGISTRY_HOST} -u "$BUILDER_REGISTRY_USERNAME" --password-stdin
 
 # Push the image to remote
-docker push "${BUILDER_BACKUP_IMAGE_NAME}:latest"
-if [ "$BUILDER_ONLY_LATEST" == "0" ]; then
+if [ "$BUILDER_PUSH_TAGS" == "both" ] || [ "$BUILDER_PUSH_TAGS" == "latest" ]; then
+	docker push "${BUILDER_BACKUP_IMAGE_NAME}:latest"
+fi
+
+if [ "$BUILDER_PUSH_TAGS" == "both" ] || [ "$BUILDER_PUSH_TAGS" == "default" ]; then
 	docker push "${backup_image_full}"
 fi
 
