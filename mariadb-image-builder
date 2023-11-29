@@ -162,6 +162,8 @@ BUILDER_DOCKER_HOST=$(projectEnvironmentVariableCheck BUILDER_DOCKER_HOST "${BUI
 
 BUILDER_MTK_YAML_BASE64=$(projectEnvironmentVariableCheck BUILDER_MTK_YAML_BASE64 "${BUILDER_MTK_YAML_BASE64}")
 
+# optional
+BUILDER_ONLY_LATEST=$(projectEnvironmentVariableCheck BUILDER_ONLY_LATEST "0")
 
 # check the pattern
 if [ -z $BUILDER_BACKUP_IMAGE_NAME ]; then
@@ -255,7 +257,7 @@ done
 
 # build the image
 ln -s mariadb.Dockerfile Dockerfile
-docker build --network=host --build-arg BUILDER_IMAGE="${BUILDER_IMAGE_NAME}" --build-arg CLEAN_IMAGE="${BUILDER_CLEAN_IMAGE_NAME}" -t ${backup_image_full} .
+docker build --network=host --build-arg BUILDER_IMAGE="${BUILDER_IMAGE_NAME}" --build-arg CLEAN_IMAGE="${BUILDER_CLEAN_IMAGE_NAME}" -t ${backup_image_full} -t "${BUILDER_BACKUP_IMAGE_NAME}:latest" .
 
 ##### Phase 4: Save new container to registry
 
@@ -275,7 +277,10 @@ echo "=== Phase 4: Save new container to registry ==="
 echo $BUILDER_REGISTRY_PASSWORD | docker login ${BUILDER_REGISTRY_HOST} -u "$BUILDER_REGISTRY_USERNAME" --password-stdin
 
 # Push the image to remote
-docker push "${backup_image_full}"
+docker push "${BUILDER_BACKUP_IMAGE_NAME}:latest"
+if [ "$BUILDER_ONLY_LATEST" == "0" ]; then
+	docker push "${backup_image_full}"
+fi
 
 echo
 echo "========================"
