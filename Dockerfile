@@ -1,5 +1,5 @@
 # build MTK from source
-FROM golang:1.18-alpine as builder
+FROM golang:1.21-alpine as builder
 
 WORKDIR /go/src/github.com/skpr
 RUN apk add --virtual --update-cache git && \
