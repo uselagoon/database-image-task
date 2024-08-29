@@ -255,9 +255,11 @@ done
 # BACKUP_IMAGE_TAG is optional and will default to `backup-${date}`
 # these have to be the same base `mariadb` version to work (ie mariadb:10.6 as the builder, and uselagoon/mariadb-10.6-drupal:latest as the clean resulting image)
 
-# build the image
+# build the image, but exit on error
 ln -s mariadb.Dockerfile Dockerfile
+set -o errexit
 docker build --network=host --build-arg BUILDER_IMAGE="${BUILDER_IMAGE_NAME}" --build-arg CLEAN_IMAGE="${BUILDER_CLEAN_IMAGE_NAME}" -t ${backup_image_full} -t "${BUILDER_BACKUP_IMAGE_NAME}:latest" .
+set +o errexit
 
 ##### Phase 4: Save new container to registry
 
