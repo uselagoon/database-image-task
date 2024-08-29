@@ -13,7 +13,7 @@ ADD https://github.com/skpr/mtk.git#$MTK_VERSION ./mtk
 WORKDIR /go/src/github.com/skpr/mtk
 
 # compile
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/mtk-dump github.com/skpr/mtk/cmd/mtk
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} go build -a -o bin/mtk-dump github.com/skpr/mtk/cmd/mtk
 
 ARG IMAGE_REPO
 FROM ${IMAGE_REPO:-uselagoon}/commons as commons
