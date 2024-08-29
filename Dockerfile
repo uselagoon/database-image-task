@@ -3,6 +3,8 @@ ARG MTK_VERSION
 # build MTK from source
 FROM golang:1.22-alpine as builder
 
+ENV MTK_VERSION=v2.0.2
+
 WORKDIR /go/src/github.com/skpr
 RUN apk add --virtual --update-cache git && \
 	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/*

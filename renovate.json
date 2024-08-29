@@ -10,16 +10,12 @@
         "groupName": "GitHub actions"
       }
     ],
-    // MTK version -- really wanted to put this in a .env or something, but this was as close as I could get
-    customManagers: [
+    "regexManagers": [
       {
-        customType: 'regex',
-        fileMatch: ['.github/workflows/docker-image.yaml'],
-        matchStrings: [
-          'env:\\s*mtk_version=(?<mtk_version>.*?)',
-        ],
-        depName: 'skpr/mtk',
-        datasourceTemplate: 'github-tags',
-      },
-    ],
+        "fileMatch": ["(^|/|\\.)Dockerfile$"],
+        "matchStrings": ["ENV MTK_VERSION=(?<currentValue>.*?)\n"],
+        "depNameTemplate": "skpr/mtk",
+        "datasourceTemplate": "github-tags"
+      }
+    ]
 }
