@@ -1,10 +1,12 @@
+ARG MTK_VERSION
+
 # build MTK from source
 FROM golang:1.18-alpine as builder
 
 WORKDIR /go/src/github.com/skpr
 RUN apk add --virtual --update-cache git && \
 	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/*
-RUN git clone https://github.com/skpr/mtk.git && cd mtk && git checkout 0c133b920123f05404854f3aacf44f05e6d20e03
+RUN git clone https://github.com/skpr/mtk.git && cd mtk && git checkout $MTK_VERSION
 WORKDIR /go/src/github.com/skpr/mtk/dump
 
 # compile

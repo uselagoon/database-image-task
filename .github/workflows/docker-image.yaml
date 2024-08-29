@@ -10,6 +10,10 @@ on:
     branches:
       - 'main'
 
+env:
+  mtk_version: v2.0.2
+
+
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -54,3 +58,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            MTK_VERSION=$mtk_version

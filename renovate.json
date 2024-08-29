@@ -9,5 +9,17 @@
         "matchDepTypes": ["action"],
         "groupName": "GitHub actions"
       }
-    ]
-  }
+    ],
+    // MTK version -- really wanted to put this in a .env or something, but this was as close as I could get
+    customManagers: [
+      {
+        customType: 'regex',
+        fileMatch: ['.github/workflows/docker-image.yaml'],
+        matchStrings: [
+          'env:\\s*mtk_version=(?<mtk_version>.*?)',
+        ],
+        depName: 'skpr/mtk',
+        datasourceTemplate: 'github-tags',
+      },
+    ],
+}
