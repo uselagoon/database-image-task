@@ -9,5 +9,13 @@
         "matchDepTypes": ["action"],
         "groupName": "GitHub actions"
       }
+    ],
+    "regexManagers": [
+      {
+        "fileMatch": ["(^|/|\\.)Dockerfile$"],
+        "matchStrings": ["ENV MTK_VERSION=(?<currentValue>.*?)\n"],
+        "depNameTemplate": "skpr/mtk",
+        "datasourceTemplate": "github-tags"
+      }
     ]
-  }
+}

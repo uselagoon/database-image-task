@@ -1,14 +1,19 @@
+ARG MTK_VERSION
+
 # build MTK from source
-FROM golang:1.18-alpine as builder
+FROM golang:1.22-alpine as builder
+
+ENV MTK_VERSION=v2.0.2
 
 WORKDIR /go/src/github.com/skpr
 RUN apk add --virtual --update-cache git && \
 	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/*
-RUN git clone https://github.com/skpr/mtk.git && cd mtk && git checkout 0c133b920123f05404854f3aacf44f05e6d20e03
-WORKDIR /go/src/github.com/skpr/mtk/dump
+ADD https://github.com/skpr/mtk.git#$MTK_VERSION ./mtk
+
+WORKDIR /go/src/github.com/skpr/mtk
 
 # compile
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/mtk-dump github.com/skpr/mtk/dump
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} go build -a -o bin/mtk-dump github.com/skpr/mtk/cmd/mtk
 
 ARG IMAGE_REPO
 FROM ${IMAGE_REPO:-uselagoon}/commons as commons
@@ -16,7 +21,7 @@ FROM ${IMAGE_REPO:-uselagoon}/commons as commons
 # Put in some labels so people know what this image is for
 LABEL org.opencontainers.image.authors="The Lagoon Authors" maintainer="The Lagoon Authors"
 
-COPY --from=builder /go/src/github.com/skpr/mtk/dump/bin/mtk-dump /usr/local/bin/mtk-dump
+COPY --from=builder /go/src/github.com/skpr/mtk/bin/mtk-dump /usr/local/bin/mtk-dump
 
 # Install necessary packages
 # -	perl for docker-login
