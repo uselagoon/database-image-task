@@ -129,6 +129,98 @@ function projectEnvironmentVariableCheck() {
 	echo "$existingValue"
 }
 
+# function to return (echo) one of the MTK environment variables.  Order of things to check:
+# -	Existing value
+# -	Passed variable name
+# -	Created from LAGOON_SERVICE_NAME
+#
+# Parameters are:
+# -	<name>	Name of MTK variable to set
+# -	<search key>	Search key to use when searching JSON
+#
+# Also reads:
+# Variable                                           | Check
+# ---------------------------------------------------+--------------------------------
+# BUILDER_MTK_DUMP_<name>                            | projectEnvironmentVariableCheck
+# BUILDER_MTK_DUMP_<name>_NAME                       | projectEnvironmentVariableCheck
+# The variable named in BUILDER_MTK_DUMP_<name>_NAME | No
+# LAGOON_SERVICE_NAME                                | Should already be checked
+function calc_MTK_variable() {
+	local mtkVariableName="$1"
+	local jsonSearchKey="$2"
+
+	# check for argument
+	[ "$mtkVariableName" ] || return
+
+	##### If MTK_DUMP_* has been set
+	# Example values
+	# If MTK_DUMP_DATABASE = foodb
+	# $final_variable_name = MTK_DUMP_DATABASE
+	# ${!final_variable_name} = foodb
+	local final_variable_name="MTK_DUMP_${mtkVariableName}"
+	local source_variable_name="BUILDER_${final_variable_name}"
+	declare "$source_variable_name"=$(projectEnvironmentVariableCheck "$source_variable_name" "${!source_variable_name}" "$jsonSearchKey")
+
+	if [ -n "${!source_variable_name}" ]; then
+		echo "${!source_variable_name}"
+		return
+	fi
+
+	##### If MTK_DUMP_*_NAME has been set
+	# Example values
+	# If DB_NAME_CENTRAL=foodb and MTK_DUMP_DATABASE_NAME = DB_NAME_CENTRAL
+	# $nameholder_variable_name = MTK_DUMP_DATABASE_NAME
+	# $use_var = DB_NAME_CENTRAL
+	# ${!use_var} = foodb
+	local nameholder_variable_name="${final_variable_name}_NAME"
+	declare "$nameholder_variable_name"=$(projectEnvironmentVariableCheck "$nameholder_variable_name" "${!nameholder_variable_name}")
+
+	if [ -n "${!nameholder_variable_name}" ]; then
+		local use_var=${!nameholder_variable_name}
+		if [ "${!use_var}" ]; then
+			echo "${!use_var}"
+			return
+		else
+			echo "Warning: Could not find value for $nameholder_variable_name > $use_var" >&2
+		fi
+	fi
+
+	##### Special settings for special types
+	case $mtkVariableName in
+		DATABASE | USERNAME | PASSWORD)
+			# Do nothing
+			;;
+		HOSTNAME)
+			# Set the DB_X host variables to what would be the lagoon service variable values.  
+			# These are generated automatically from the LAGOON_SERVICE_NAME
+			# these will use bash references later; eg: ${!DB_HOST}
+			local DB_HOST="${LAGOON_SERVICE_NAME}_HOST"
+			local DB_READREPLICA_HOSTS="${LAGOON_SERVICE_NAME}_READREPLICA_HOSTS"
+
+			# Picks one of the read replicas to use when dumping the database
+			local DB_HOSTNAME
+			DB_HOSTNAME=$(echo "${!DB_READREPLICA_HOSTS}" | perl -F, -ane '$index=int(rand(scalar(@F)));print $F[$index]')
+			# if `DB_HOSTNAME` is empty, then need to fall back to mariadb host
+			if [ -z "$DB_HOSTNAME" ]; then
+				echo "Warning: No read replica found" >&2
+				DB_HOSTNAME="${!DB_HOST}"
+			fi
+			echo "$DB_HOSTNAME"
+			return
+			;;
+		CONFIG)
+			echo "Error: Can't directly handle '$mtkVariableName' variable -- please do separately" >&2
+			exit 1
+			;;
+		*)
+			echo "Error: Unrecognised MTK variable type: $mtkVariableName" >&2
+			exit 1
+	esac
+
+	##### Fall back to LAGOON_SERVICE_NAME
+	echo "${LAGOON_SERVICE_NAME}_USERNAME"
+}
+
 echo "======================="
 echo "Starting image-builder"
 echo "======================="
@@ -165,6 +257,13 @@ BUILDER_MTK_YAML_BASE64=$(projectEnvironmentVariableCheck BUILDER_MTK_YAML_BASE6
 # optional
 BUILDER_PUSH_TAGS=$(projectEnvironmentVariableCheck BUILDER_PUSH_TAGS "both")
 
+# Set up the MTK variables
+MTK_DUMP_HOSTNAME=$(calc_MTK_variable HOSTNAME "$MTK_DUMP_HOSTNAME")
+MTK_DUMP_DATABASE=$(calc_MTK_variable DATABASE "$MTK_DUMP_DATABASE")
+MTK_DUMP_USERNAME=$(calc_MTK_variable USERNAME "$MTK_DUMP_USERNAME")
+MTK_DUMP_PASSWORD=$(calc_MTK_variable PASSWORD "$MTK_DUMP_PASSWORD")
+
+
 # check the pattern
 if [ -z $BUILDER_BACKUP_IMAGE_NAME ]; then
 	# default pattern to parse if no image provided
@@ -175,7 +274,7 @@ else
 fi
 echo $BUILDER_BACKUP_IMAGE_NAME
 
-# error out if username and password aren't provided
+# error out if registry username and password aren't provided
 if [ -z $BUILDER_REGISTRY_USERNAME ]; then
 	echo "BUILDER_REGISTRY_USERNAME not defined"
 	exit 1
@@ -189,7 +288,6 @@ fi
 # Generic variables
 date=`date -I`
 san_db_dump_filename="sanitised-dump.sql"
-san_db_tarfile="container-${date}.tar"
 backup_image_tag=${BUILDER_BACKUP_IMAGE_TAG:-"backup-${date}"}
 backup_image_full="${BUILDER_BACKUP_IMAGE_NAME}:${backup_image_tag}"
 
@@ -199,30 +297,14 @@ backup_image_full="${BUILDER_BACKUP_IMAGE_NAME}:${backup_image_tag}"
 echo
 echo "=== Phase 2: MTK dump ==="
 
-# set the DB_X variables to what would be the lagoon service variable values, these are handled automatically from the LAGOON_SERVICE_NAME
-# these will use bash references later; eg: ${!DB_HOST}
-DB_HOST="${LAGOON_SERVICE_NAME}_HOST"
-DB_READREPLICA_HOSTS="${LAGOON_SERVICE_NAME}_READREPLICA_HOSTS"
-DB_USERNAME="${LAGOON_SERVICE_NAME}_USERNAME"
-DB_PASSWORD="${LAGOON_SERVICE_NAME}_PASSWORD"
-DB_DATABASE="${LAGOON_SERVICE_NAME}_DATABASE"
-
-# Picks one of the read replicas to use when dumping the database
-DB_HOSTNAME=`echo "${!DB_READREPLICA_HOSTS}" | perl -F, -ane '$index=int(rand(scalar(@F)));print $F[$index]'`
-# if `DB_HOSTNAME` is empty, then need to fall back to mariadb host
-if [ -z $DB_HOSTNAME ]; then
-    DB_HOSTNAME="${!DB_HOST}"
-fi
+export MTK_DUMP_HOSTNAME MTK_DUMP_DATABASE MTK_DUMP_USERNAME MTK_DUMP_PASSWORD
 
 # dump the MTK YAML to the mtk file if it has been provided, otherwise mtk will just dump the entire database as is
-if [ ! -z $BUILDER_MTK_YAML_BASE64 ]; then
-	echo $BUILDER_MTK_YAML_BASE64 | base64 -d > mtk.yml
-	export MTK_DUMP_CONFIG="mtk.yml"
+if [ -n "$BUILDER_MTK_YAML_BASE64" ]; then
+	mtk_filename=mtk.yml
+	echo "$BUILDER_MTK_YAML_BASE64" | base64 -d > $mtk_filename
+	export MTK_DUMP_CONFIG="$mtk_filename"
 fi
-export MTK_DUMP_HOSTNAME="$DB_HOSTNAME"
-export MTK_DUMP_USERNAME="${!DB_USERNAME}"
-export MTK_DUMP_PASSWORD="${!DB_PASSWORD}"
-export MTK_DUMP_DATABASE="${!DB_DATABASE}"
 
 # Run MTK here
 mtk-dump > "$san_db_dump_filename"

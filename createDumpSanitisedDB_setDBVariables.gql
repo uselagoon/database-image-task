@@ -62,6 +62,58 @@ mutation createDumpSanitisedDB {
 					displayName: "OPTIONAL: if you want to provide an organization base for the backup image name to parse",
 					type: STRING
 					optional: true
+				},
+				# Database hostname
+				{
+					name: "BUILDER_MTK_DUMP_HOSTNAME",
+					displayName: "OPTIONAL: The database hostname you want to use",
+					type: STRING
+					optional: true
+				},
+				{
+					name: "BUILDER_MTK_DUMP_HOSTNAME_NAME",
+					displayName: "OPTIONAL: The name of the variable that contains the database hostname you want to use",
+					type: STRING
+					optional: true
+				},
+				# Database name
+				{
+					name: "BUILDER_MTK_DUMP_DATABASE",
+					displayName: "OPTIONAL: The database name you want to use",
+					type: STRING
+					optional: true
+				},
+				{
+					name: "BUILDER_MTK_DUMP_DATABASE_NAME",
+					displayName: "OPTIONAL: The name of the variable that contains the database name you want to use",
+					type: STRING
+					optional: true
+				},
+				# Database username
+				{
+					name: "BUILDER_MTK_DUMP_USERNAME",
+					displayName: "OPTIONAL: The database username you want to use",
+					type: STRING
+					optional: true
+				},
+				{
+					name: "BUILDER_MTK_DUMP_USERNAME_NAME",
+					displayName: "OPTIONAL: The name of the variable that contains the database username you want to use",
+					type: STRING
+					optional: true
+				},
+				# Database password
+				{
+					name: "BUILDER_MTK_DUMP_PASSWORD",
+					displayName: "OPTIONAL: The database password you want to use",
+					type: STRING
+					optional: true
+				},
+				{
+					name: "BUILDER_MTK_DUMP_PASSWORD_NAME",
+					displayName: "OPTIONAL: The name of the variable that contains the database password you want to use",
+					type: STRING
+					optional: true
 				}
 			]
 		}
