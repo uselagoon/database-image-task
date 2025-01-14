@@ -29,3 +29,34 @@ The process goes through X basic stages:
 2. MTK creates a database dump that's basically a sanitised .sql file
 3. Make docker-style container with sanitised DB (using podman)
 4. Save new container to registry
+
+## Files
+
+### Example mtk.yml file
+
+example.mtk.yml
+
+### Dockerfiles
+
+Dockerfile: Docker file for the builder image
+
+builder/mariadb.Dockerfile: Docker file for the sanitised DB image
+
+builder/final-my.cnf: Configuration file for the above
+
+builder/loading-my.cnf: Configuration file for MySQL while building the sanitised database
+
+### Scripts
+
+image-builder-entry: Launches the next script with appropriate parameters
+
+mariadb-image-builder: Main script that dumps the sanitised database and puts it into a new image
+
+### Example GraphQL queries to use it
+createDumpSanitisedDB.gql
+createDumpSanitisedDB_noArgs.gql
+createDumpSanitisedDB_setDBVariables.gql
+
+# Configuration for renovate bot
+renovate.json
+

@@ -41,7 +41,7 @@ COPY mariadb-image-builder /usr/local/bin/mariadb-image-builder
 
 WORKDIR /builder
 
-COPY builder/mariadb.Dockerfile /builder/mariadb.Dockerfile
+COPY builder/* /builder/
 
 RUN chmod a+x /usr/local/bin/mariadb-image-builder /usr/local/bin/mtk-dump /usr/local/bin/image-builder-entry
 

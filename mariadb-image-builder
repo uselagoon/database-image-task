@@ -139,12 +139,12 @@ function projectEnvironmentVariableCheck() {
 # -	<search key>	Search key to use when searching JSON
 #
 # Also reads:
-# Variable                                           | Check
-# ---------------------------------------------------+--------------------------------
-# BUILDER_MTK_DUMP_<name>                            | projectEnvironmentVariableCheck
-# BUILDER_MTK_DUMP_<name>_NAME                       | projectEnvironmentVariableCheck
-# The variable named in BUILDER_MTK_DUMP_<name>_NAME | No
-# LAGOON_SERVICE_NAME                                | Should already be checked
+# Variable                                      | Check
+# ----------------------------------------------+--------------------------------
+# BUILDER_MTK_<name>                            | projectEnvironmentVariableCheck
+# BUILDER_MTK_<name>_NAME                       | projectEnvironmentVariableCheck
+# The variable named in BUILDER_MTK_<name>_NAME | No
+# LAGOON_SERVICE_NAME                           | Should already be checked
 function calc_MTK_variable() {
 	local mtkVariableName="$1"
 	local jsonSearchKey="$2"
@@ -152,12 +152,12 @@ function calc_MTK_variable() {
 	# check for argument
 	[ "$mtkVariableName" ] || return
 
-	##### If MTK_DUMP_* has been set
+	##### If MTK_* has been set
 	# Example values
-	# If MTK_DUMP_DATABASE = foodb
-	# $final_variable_name = MTK_DUMP_DATABASE
+	# If MTK_DATABASE = foodb
+	# $final_variable_name = MTK_DATABASE
 	# ${!final_variable_name} = foodb
-	local final_variable_name="MTK_DUMP_${mtkVariableName}"
+	local final_variable_name="MTK_${mtkVariableName}"
 	local source_variable_name="BUILDER_${final_variable_name}"
 	declare "$source_variable_name"=$(projectEnvironmentVariableCheck "$source_variable_name" "${!source_variable_name}" "$jsonSearchKey")
 
@@ -166,10 +166,10 @@ function calc_MTK_variable() {
 		return
 	fi
 
-	##### If MTK_DUMP_*_NAME has been set
+	##### If MTK_*_NAME has been set
 	# Example values
-	# If DB_NAME_CENTRAL=foodb and MTK_DUMP_DATABASE_NAME = DB_NAME_CENTRAL
-	# $nameholder_variable_name = MTK_DUMP_DATABASE_NAME
+	# If DB_NAME_CENTRAL=foodb and MTK_DATABASE_NAME = DB_NAME_CENTRAL
+	# $nameholder_variable_name = MTK_DATABASE_NAME
 	# $use_var = DB_NAME_CENTRAL
 	# ${!use_var} = foodb
 	local nameholder_variable_name="${final_variable_name}_NAME"
@@ -218,7 +218,8 @@ function calc_MTK_variable() {
 	esac
 
 	##### Fall back to LAGOON_SERVICE_NAME
-	echo "${LAGOON_SERVICE_NAME}_USERNAME"
+	service_var_name="${LAGOON_SERVICE_NAME}_$mtkVariableName"
+	echo "${!service_var_name}"
 }
 
 echo "======================="
@@ -258,11 +259,10 @@ BUILDER_MTK_YAML_BASE64=$(projectEnvironmentVariableCheck BUILDER_MTK_YAML_BASE6
 BUILDER_PUSH_TAGS=$(projectEnvironmentVariableCheck BUILDER_PUSH_TAGS "both")
 
 # Set up the MTK variables
-MTK_DUMP_HOSTNAME=$(calc_MTK_variable HOSTNAME "$MTK_DUMP_HOSTNAME")
-MTK_DUMP_DATABASE=$(calc_MTK_variable DATABASE "$MTK_DUMP_DATABASE")
-MTK_DUMP_USERNAME=$(calc_MTK_variable USERNAME "$MTK_DUMP_USERNAME")
-MTK_DUMP_PASSWORD=$(calc_MTK_variable PASSWORD "$MTK_DUMP_PASSWORD")
-
+MTK_HOSTNAME=$(calc_MTK_variable HOSTNAME "$MTK_HOSTNAME")
+MTK_DATABASE=$(calc_MTK_variable DATABASE "$MTK_DATABASE")
+MTK_USERNAME=$(calc_MTK_variable USERNAME "$MTK_USERNAME")
+MTK_PASSWORD=$(calc_MTK_variable PASSWORD "$MTK_PASSWORD")
 
 # check the pattern
 if [ -z $BUILDER_BACKUP_IMAGE_NAME ]; then
@@ -291,23 +291,37 @@ san_db_dump_filename="sanitised-dump.sql"
 backup_image_tag=${BUILDER_BACKUP_IMAGE_TAG:-"backup-${date}"}
 backup_image_full="${BUILDER_BACKUP_IMAGE_NAME}:${backup_image_tag}"
 
+echo backup_image_full=$backup_image_full
+echo BUILDER_BACKUP_IMAGE_NAME=$BUILDER_BACKUP_IMAGE_NAME
+echo backup_image_tag=$backup_image_tag
 
 ##### Phase 2: MTK dump
 
 echo
 echo "=== Phase 2: MTK dump ==="
 
-export MTK_DUMP_HOSTNAME MTK_DUMP_DATABASE MTK_DUMP_USERNAME MTK_DUMP_PASSWORD
+export MTK_HOSTNAME MTK_DATABASE MTK_USERNAME MTK_PASSWORD
 
 # dump the MTK YAML to the mtk file if it has been provided, otherwise mtk will just dump the entire database as is
 if [ -n "$BUILDER_MTK_YAML_BASE64" ]; then
 	mtk_filename=mtk.yml
 	echo "$BUILDER_MTK_YAML_BASE64" | base64 -d > $mtk_filename
-	export MTK_DUMP_CONFIG="$mtk_filename"
+	export MTK_CONFIG="$mtk_filename"
 fi
 
 # Run MTK here
-mtk-dump > "$san_db_dump_filename"
+echo
+env | egrep "MTK|^DB_|${LAGOON_SERVICE_NAME}_" | sort
+echo
+set -o xtrace
+mtk-dump dump "$MTK_DATABASE" > "$san_db_dump_filename"
+mtk_return_value=$?
+set +o xtrace
+if [ "$mtk_return_value" -ne 0 ]; then
+	echo "Got errors running mtk-dump"
+	cat "$san_db_dump_filename"
+	exit $mtk_return_value
+fi
 
 ##### Phase 3: Make container with sanitised DB
 
@@ -338,9 +352,12 @@ done
 # these have to be the same base `mariadb` version to work (ie mariadb:10.6 as the builder, and uselagoon/mariadb-10.6-drupal:latest as the clean resulting image)
 
 # build the image, but exit on error
+set -o xtrace
 ln -s mariadb.Dockerfile Dockerfile
 set -o errexit
-docker build --network=host --build-arg BUILDER_IMAGE="${BUILDER_IMAGE_NAME}" --build-arg CLEAN_IMAGE="${BUILDER_CLEAN_IMAGE_NAME}" -t ${backup_image_full} -t "${BUILDER_BACKUP_IMAGE_NAME}:latest" .
+docker build --network=host --build-arg BUILDER_IMAGE="${BUILDER_IMAGE_NAME}" --build-arg CLEAN_IMAGE="${BUILDER_CLEAN_IMAGE_NAME}" \
+	-t ${backup_image_full} -t "${BUILDER_BACKUP_IMAGE_NAME}:latest" .
+set +o xtrace
 set +o errexit
 
 ##### Phase 4: Save new container to registry
