@@ -1,7 +1,7 @@
 ARG MTK_VERSION
 
 # build MTK from source
-FROM golang:1.23-alpine as builder
+FROM golang:1.24-alpine as builder
 
 ENV MTK_VERSION=v2.1.0
 
