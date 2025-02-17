@@ -21,15 +21,12 @@ COPY sanitised-dump.sql /docker-entrypoint-initdb.d/
 RUN ["/usr/local/bin/docker-entrypoint.sh", "mysqld", "--datadir", "/initialized-db", "--aria-log-dir-path", "/initialized-db"]
 
 #  create the `.my.cnf` that the lagoon mariadb images use
-RUN echo "[client]" >> /initialized-db/.my.cnf && \
-echo "user=root" >> /initialized-db/.my.cnf && \
-echo "password=Lag00n" >> /initialized-db/.my.cnf && \
-echo "[mysql]" >> /initialized-db/.my.cnf && \
-echo "database=drupal" >> /initialized-db/.my.cnf
-
 # apply the permissions in the builder image before transferring to the clean image
 # this brings the `.my.cnf` file with it so that the clean image will start correctly
+COPY my.cnf /initialized-db/.my.cnf
 RUN chown -R 100:root /initialized-db
+COPY import.my.cnf /etc/mysql/my.cnf
+RUN chown -R 100:root /etc/mysql/my.cnf
 
 ARG CLEAN_IMAGE
 FROM ${CLEAN_IMAGE:-uselagoon/mariadb-10.6-drupal:latest}
