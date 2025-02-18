@@ -221,6 +221,46 @@ func Test_generateValues(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "test6",
+			description: "check mtk values for existing MTK_DUMP prefixed variables and debug variable",
+			args: args{
+				envVars: []variables.LagoonEnvironmentVariable{
+					{Name: "BUILDER_DOCKER_COMPOSE_SERVICE_NAME", Value: "mariadb", Scope: "global"},
+					{Name: "BUILDER_REGISTRY_USERNAME", Value: "reguser", Scope: "global"},
+					{Name: "BUILDER_REGISTRY_PASSWORD", Value: "regpass", Scope: "global"},
+					{Name: "BUILDER_REGISTRY_HOST", Value: "reghost", Scope: "global"},
+					{Name: "BUILDER_MTK_DUMP_HOSTNAME", Value: "dbhost", Scope: "global"},
+					{Name: "BUILDER_MTK_DUMP_USERNAME", Value: "dbuser", Scope: "global"},
+					{Name: "BUILDER_MTK_DUMP_PASSWORD", Value: "dbpass", Scope: "global"},
+					{Name: "BUILDER_MTK_DUMP_DATABASE", Value: "dbname", Scope: "global"},
+					{Name: "BUILDER_IMAGE_DEBUG", Value: "true", Scope: "global"},
+				},
+				setVars: []EnvironmentVariable{
+					{Name: "LAGOON_PROJECT", Value: "lagpro"},
+					{Name: "LAGOON_ENVIRONMENT", Value: "lagenv"},
+				},
+			},
+			want: Builder{
+				DockerComposeServiceName:      "mariadb",
+				FixedDockerComposeServiceName: "MARIADB",
+				SourceImageName:               "mariadb:10.6",
+				CleanImageName:                "uselagoon/mariadb-10.6-drupal:latest",
+				ResultImageName:               "lagpro/lagenv",
+				DockerHost:                    "docker-host.lagoon-image-builder.svc",
+				PushTags:                      "both",
+				RegistryUsername:              "reguser",
+				RegistryPassword:              "regpass",
+				RegistryHost:                  "reghost",
+				Debug:                         true,
+				MTK: MTK{
+					Host:     "dbhost",
+					Username: "dbuser",
+					Password: "dbpass",
+					Database: "dbname",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		envvars, _ := json.Marshal(tt.args.envVars)

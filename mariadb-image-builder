@@ -10,6 +10,8 @@ echo "=== Phase 1: variable setup ==="
 # source the variables required
 IMAGE_BUILD_DATA=$(database-image-task dump)
 
+DEBUG=$(echo "$IMAGE_BUILD_DATA" | jq -rc '.debug')
+
 # Set up the MTK variables
 export MTK_HOSTNAME=$(echo "$IMAGE_BUILD_DATA" | jq -rc '.mtk.host')
 export MTK_DATABASE=$(echo "$IMAGE_BUILD_DATA" | jq -rc '.mtk.database')
@@ -56,8 +58,17 @@ if [ -n "$(echo "$IMAGE_BUILD_DATA" | jq -c '.mtkYAML')" ]; then
 fi
 
 # Run MTK here
+if [ "$DEBUG" == "true" ]; then
+	echo
+	env | egrep "MTK|^DB_|${LAGOON_SERVICE_NAME}_" | sort
+	echo
+	set +o xtrace
+fi
 mtk-dump dump "$MTK_DATABASE" > "$san_db_dump_filename"
 mtk_return_value=$?
+if [ "$DEBUG" == "true" ]; then
+	set +o xtrace
+fi
 if [ "$mtk_return_value" -ne 0 ]; then
 	echo "Got errors running mtk-dump"
 	cat "$san_db_dump_filename"
@@ -97,12 +108,18 @@ envsubst < my.cnf.tpl > my.cnf
 envsubst < import.my.cnf.tpl > import.my.cnf
 
 # build the image, but exit on error
+if [ "$DEBUG" == "true" ]; then
+	set -o xtrace
+fi
 ln -s mariadb.Dockerfile Dockerfile
 set -o errexit
 docker build --network=host --build-arg BUILDER_IMAGE="$(echo "$IMAGE_BUILD_DATA" | jq -rc '.sourceImage')" \
 	--build-arg CLEAN_IMAGE="$(echo "$IMAGE_BUILD_DATA" | jq -rc '.cleanImage')" \
 	-t ${backup_image_full} \
 	-t "${BUILDER_BACKUP_IMAGE_NAME}:latest" .
+if [ "$DEBUG" == "true" ]; then
+	set +o xtrace
+fi
 set +o errexit
 
 ##### Phase 4: Save new container to registry

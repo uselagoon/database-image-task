@@ -3,6 +3,7 @@ package builder
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/uselagoon/machinery/utils/variables"
@@ -28,6 +29,7 @@ type Builder struct {
 	DockerHost                    string `json:"dockerHost"`
 	PushTags                      string `json:"pushTags"`
 	MTKYAML                       string `json:"mtkYAML"`
+	Debug                         bool   `json:"debug,omitemtpy"`
 	MTK                           MTK    `json:"mtk"`
 }
 
@@ -39,6 +41,8 @@ type MTK struct {
 }
 
 func generateBuildValues(vars []variables.LagoonEnvironmentVariable) Builder {
+	debugStr := checkVariable("BUILDER_IMAGE_DEBUG", variables.GetEnv("BUILDER_IMAGE_DEBUG", ""), vars)
+	debug, _ := strconv.ParseBool(debugStr)
 	build := Builder{
 		DockerComposeServiceName:      checkVariable("BUILDER_DOCKER_COMPOSE_SERVICE_NAME", variables.GetEnv("BUILDER_DOCKER_COMPOSE_SERVICE_NAME", "mariadb"), vars),
 		FixedDockerComposeServiceName: fixServiceName(checkVariable("BUILDER_DOCKER_COMPOSE_SERVICE_NAME", variables.GetEnv("BUILDER_DOCKER_COMPOSE_SERVICE_NAME", "mariadb"), vars)),
@@ -54,6 +58,7 @@ func generateBuildValues(vars []variables.LagoonEnvironmentVariable) Builder {
 		DockerHost:                    checkVariable("BUILDER_DOCKER_HOST", variables.GetEnv("BUILDER_DOCKER_HOST", "docker-host.lagoon-image-builder.svc"), vars),
 		PushTags:                      checkVariable("BUILDER_PUSH_TAGS", variables.GetEnv("BUILDER_PUSH_TAGS", "both"), vars),
 		MTKYAML:                       checkVariable("BUILDER_MTK_YAML_BASE64", variables.GetEnv("BUILDER_MTK_YAML_BASE64", ""), vars),
+		Debug:                         debug,
 	}
 	return build
 }
