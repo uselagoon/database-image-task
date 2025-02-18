@@ -1,3 +1,8 @@
 #!/bin/bash
 
+# print out the database-image-task version information
+echo "##############################################"
+database-image-task version
+echo "##############################################"
+
 /usr/local/bin/mariadb-image-builder 2>&1
