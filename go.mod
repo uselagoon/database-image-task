@@ -4,8 +4,8 @@ go 1.23.3
 
 require (
 	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
-	github.com/spf13/cobra v1.9.0
-	github.com/uselagoon/machinery v0.0.31
+	github.com/spf13/cobra v1.9.1
+	github.com/uselagoon/machinery v0.0.32
 )
 
 require (
