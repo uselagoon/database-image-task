@@ -103,9 +103,6 @@ done
 # BACKUP_IMAGE_TAG is optional and will default to `backup-${date}`
 # these have to be the same base `mariadb` version to work (ie mariadb:10.6 as the builder, and uselagoon/mariadb-10.6-drupal:latest as the clean resulting image)
 
-# template out the my.cnf file for the images
-envsubst < my.cnf.tpl > my.cnf
-envsubst < import.my.cnf.tpl > import.my.cnf
 
 # build the image, but exit on error
 if [ "$DEBUG" == "true" ]; then
@@ -113,6 +110,9 @@ if [ "$DEBUG" == "true" ]; then
 fi
 ln -s mariadb.Dockerfile Dockerfile
 set -o errexit
+# template out the my.cnf file for the images
+envsubst < my.cnf.tpl > my.cnf
+envsubst < import.my.cnf.tpl > import.my.cnf
 docker build --network=host --build-arg BUILDER_IMAGE="$(echo "$IMAGE_BUILD_DATA" | jq -rc '.sourceImage')" \
 	--build-arg CLEAN_IMAGE="$(echo "$IMAGE_BUILD_DATA" | jq -rc '.cleanImage')" \
 	-t ${backup_image_full} \

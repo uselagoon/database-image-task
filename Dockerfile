@@ -61,7 +61,7 @@ COPY --from=golang /app/database-image-task /usr/local/bin/database-image-task
 # Install necessary packages
 # -	perl for docker-login
 # -	bash for image-builder
-RUN apk add --virtual --update-cache perl bash docker-cli jq && \
+RUN apk add --virtual --update-cache perl bash docker-cli jq envsubst && \
 	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/*
 
 # Put in docker credentials so we can do docker pushes
