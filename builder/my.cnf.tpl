@@ -8,4 +8,4 @@ password=Lag00n
 database=${BUILDER_BACKUP_IMAGE_DATABASE_NAME:-drupal}
 
 [mysqld]
-max_allowed_packet=100M
+max_allowed_packet=1G
