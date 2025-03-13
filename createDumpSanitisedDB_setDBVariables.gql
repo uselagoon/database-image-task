@@ -20,6 +20,7 @@ mutation createDumpSanitisedDB {
 					displayName: "The name of the resulting image to build without tag (eg, for dockerhub myproject/image, or for custom registry quay.io/myproject/image, can also be a pattern like '${registry}/${organization}/${project}/${environment}/${service}-data')",
 					type: STRING
 					# defaultValue: "${registry}/${organization}/${project}/${environment}/${service}-data"
+					# In addition to the above, there's also a ${database} variable that has the name of the database, should that be useful
 				},
 				{
 					name: "BUILDER_IMAGE_NAME",
