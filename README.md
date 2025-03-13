@@ -21,6 +21,12 @@ An example of the GraphQL needed to create an advanced task is available in
 createDumpSanitisedDB.gql.  The variables which can be passed in are also 
 documented in this file (in the "displayName" field of each entry).  
 
+The GraphQL examples are:
+
+* **createDumpSanitisedDB.gql**: Allows the person running the task to change all the (normal) variables
+* **createDumpSanitisedDB_noArgs.gql**: Variables must be set on the environment; the person running the task has no control
+* **createDumpSanitisedDB_setDBVariables.gql**: Allows the person running the task to additionally choose the database to which they connect
+
 ## Process
 
 The process goes through X basic stages:
