@@ -300,6 +300,7 @@ func Test_imagePatternParser(t *testing.T) {
 	}
 	tests := []struct {
 		name string
+		description string
 		args args
 		want string
 	}{
@@ -373,6 +374,34 @@ func Test_imagePatternParser(t *testing.T) {
 				},
 			},
 			want: "reghost/lagpro/mariadb-data",
+		},
+		{
+			name: "test4",
+			description: "Check whether $database works",
+			args: args{
+				pattern: "${organization}/database-mysql-${project}-${environment}-${database}",
+				build: Builder{
+					DockerComposeServiceName:      "mariadb",
+					FixedDockerComposeServiceName: "MARIADB",
+					SourceImageName:               "mariadb:10.6",
+					CleanImageName:                "uselagoon/mariadb-10.6-drupal:latest",
+					ResultImageName:               "backup/image",
+					DockerHost:                    "docker-host.lagoon-image-builder.svc",
+					PushTags:                      "both",
+					RegistryUsername:              "reguser",
+					RegistryPassword:              "regpass",
+					RegistryHost:                  "reghost",
+					RegistryOrganization:          "regorg",
+					MTK: MTK{
+						Database:		"test_database_name",
+					},
+				},
+				setVars: []EnvironmentVariable{
+					{Name: "LAGOON_PROJECT", Value: "lagpro"},
+					{Name: "LAGOON_ENVIRONMENT", Value: "lagenv"},
+				},
+			},
+			want: "regorg/database-mysql-lagpro-lagenv-test_database_name",
 		},
 	}
 	for _, tt := range tests {
