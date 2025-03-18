@@ -403,6 +403,34 @@ func Test_imagePatternParser(t *testing.T) {
 			},
 			want: "regorg/database-mysql-lagpro-lagenv-test_database_name",
 		},
+		{
+			name: "test5",
+			description: "Check whether removal of double special characters works",
+			args: args{
+				pattern: "${organization}/database-mysql-${project}-${environment}-${database}",
+				build: Builder{
+					DockerComposeServiceName:      "mariadb",
+					FixedDockerComposeServiceName: "MARIADB",
+					SourceImageName:               "mariadb:10.6",
+					CleanImageName:                "uselagoon/mariadb-10.6-drupal:latest",
+					ResultImageName:               "backup/image",
+					DockerHost:                    "docker-host.lagoon-image-builder.svc",
+					PushTags:                      "both",
+					RegistryUsername:              "reguser",
+					RegistryPassword:              "regpass",
+					RegistryHost:                  "reghost",
+					RegistryOrganization:          "regorg",
+					MTK: MTK{
+						Database:		"test_database__name!!",
+					},
+				},
+				setVars: []EnvironmentVariable{
+					{Name: "LAGOON_PROJECT", Value: "lagpro"},
+					{Name: "LAGOON_ENVIRONMENT", Value: "lagenv"},
+				},
+			},
+			want: "regorg/database-mysql-lagpro-lagenv-test_database_name",
+		},
 	}
 	for _, tt := range tests {
 		for _, envVar := range tt.args.setVars {
