@@ -21,6 +21,7 @@ mutation createDumpSanitisedDB {
 					type: STRING
 					# defaultValue: "${registry}/${organization}/${project}/${environment}/${service}-data"
 					# In addition to the above, there's also a ${database} variable that has the name of the database, should that be useful
+					# ${database} is munged so that a) any special character not allowed in DockerHub repo names is removed (replaced with nothing), and b) if there are two special characters in a row, the first is retained, and later ones are removed
 				},
 				{
 					name: "BUILDER_IMAGE_NAME",

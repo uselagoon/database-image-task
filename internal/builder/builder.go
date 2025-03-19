@@ -148,7 +148,8 @@ func calculateMTKVariable(name string, build Builder, vars []variables.LagoonEnv
 
 // imagePatternParser parses the image pattern
 func imagePatternParser(pattern string, build Builder) string {
-	pattern = strings.Replace(pattern, "${database}", build.MTK.Database, 1)
+	cleanDatabase := replaceDoubleSpecial(build.MTK.Database)
+	pattern = strings.Replace(pattern, "${database}", cleanDatabase, 1)
 	pattern = strings.Replace(pattern, "${service}", build.DockerComposeServiceName, 1)
 	pattern = strings.Replace(pattern, "${registry}", build.RegistryHost, 1)
 	pattern = strings.Replace(pattern, "${organization}", build.RegistryOrganization, 1)
@@ -156,3 +157,34 @@ func imagePatternParser(pattern string, build Builder) string {
 	pattern = strings.Replace(pattern, "${environment}", variables.GetEnv("LAGOON_ENVIRONMENT", ""), 1)
 	return pattern
 }
+
+// Replaces two of the same special character in a row with a single instance, because otherwise DockerHub will reject it
+// Inspired by https://stackoverflow.com/questions/59442559/how-to-compare-a-character-with-the-next-one-in-the-same-string 
+func replaceDoubleSpecial(source string) string {
+	var destination string
+	lastSpecial := false
+	for sourcecount, c := range source {
+		if ! isAlphaNumeric(c) && ! dockerHubSpecial(c) {
+			continue // Don't copy if it isn't an allowed character
+		}
+		if sourcecount > 0 && dockerHubSpecial(c) && lastSpecial {
+			continue // Skip special characters in a row
+		}
+		destination += string(c)
+		lastSpecial = dockerHubSpecial(c)
+	}
+	return destination
+}
+
+// Checks if a character is alphanumeric
+// From https://medium.com/@saharat.paynok/how-to-check-if-the-character-is-alphanumeric-in-go-6783b92ec412
+func isAlphaNumeric(c rune) bool {
+	// Check if the byte value falls within the range of alphanumeric characters
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+}
+
+// Checks if a character is one of the allowed DockerHub special characters
+func dockerHubSpecial(c rune) bool {
+	return (c == '.') || (c == '_') || (c == '-') || (c == '/')
+}
+
