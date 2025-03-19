@@ -162,8 +162,7 @@ func imagePatternParser(pattern string, build Builder) string {
 // Inspired by https://stackoverflow.com/questions/59442559/how-to-compare-a-character-with-the-next-one-in-the-same-string 
 func replaceDoubleSpecial(source string) string {
 	var destination string
-	var lastSpecial bool
-	lastSpecial = false
+	lastSpecial := false
 	for sourcecount, c := range source {
 		if ! isAlphaNumeric(c) && ! dockerHubSpecial(c) {
 			continue // Don't copy if it isn't an allowed character
