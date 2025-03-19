@@ -148,9 +148,8 @@ func calculateMTKVariable(name string, build Builder, vars []variables.LagoonEnv
 
 // imagePatternParser parses the image pattern
 func imagePatternParser(pattern string, build Builder) string {
-	var clean_database string
-	clean_database = replaceDoubleSpecial(build.MTK.Database)
-	pattern = strings.Replace(pattern, "${database}", clean_database, 1)
+	cleanDatabase := replaceDoubleSpecial(build.MTK.Database)
+	pattern = strings.Replace(pattern, "${database}", cleanDatabase, 1)
 	pattern = strings.Replace(pattern, "${service}", build.DockerComposeServiceName, 1)
 	pattern = strings.Replace(pattern, "${registry}", build.RegistryHost, 1)
 	pattern = strings.Replace(pattern, "${organization}", build.RegistryOrganization, 1)
