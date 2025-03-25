@@ -7,11 +7,11 @@ FROM ${BUILDER_IMAGE} AS builder
 # That file does the DB initialization but also runs mysql daemon, by removing the last line it will only init
 RUN ["sed", "-i", "s/exec \"$@\"/echo \"not running $@\"/", "/usr/local/bin/docker-entrypoint.sh"]
 
-# set the lagoon mariadb-drupal defaults here
+# set the lagoon mysql defaults here
 ENV MYSQL_ROOT_PASSWORD=Lag00n
-ENV MARIADB_DATABASE=drupal \
-    MARIADB_USER=drupal \
-    MARIADB_PASSWORD=drupal
+ENV MYSQL_DATABASE=lagoon \
+    MYSQL_USER=lagoon \
+    MYSQL_PASSWORD=lagoon
 
 COPY sanitised-dump.sql /docker-entrypoint-initdb.d/
 
@@ -23,16 +23,15 @@ COPY sanitised-dump.sql /docker-entrypoint-initdb.d/
 # in the output
 RUN /usr/local/bin/docker-entrypoint.sh mysqld \
     --max-allowed-packet=1G \
-    --datadir /initialized-db \
-    --aria-log-dir-path /initialized-db | tail -n 3
+    --datadir /initialized-db | tail -n 3
 
 #  create the `.my.cnf` that the lagoon mariadb images use
 # apply the permissions in the builder image before transferring to the clean image
 # this brings the `.my.cnf` file with it so that the clean image will start correctly
 COPY my.cnf /initialized-db/.my.cnf
-RUN chown -R 100:root /initialized-db
+RUN chown -R 999:root /initialized-db
 COPY import.my.cnf /etc/mysql/my.cnf
-RUN chown -R 100:root /etc/mysql/my.cnf
+RUN chown -R 999:root /etc/mysql/my.cnf
 
 FROM ${CLEAN_IMAGE}
 

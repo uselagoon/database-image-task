@@ -29,6 +29,7 @@ type Builder struct {
 	DockerHost                    string `json:"dockerHost"`
 	PushTags                      string `json:"pushTags"`
 	MTKYAML                       string `json:"mtkYAML"`
+	DatabaseType                  string `json:"databaseType"`
 	Debug                         bool   `json:"debug,omitemtpy"`
 	MTK                           MTK    `json:"mtk"`
 }
@@ -42,15 +43,13 @@ type MTK struct {
 
 func generateBuildValues(vars []variables.LagoonEnvironmentVariable) Builder {
 	debugStr := checkVariable("BUILDER_IMAGE_DEBUG", variables.GetEnv("BUILDER_IMAGE_DEBUG", ""), vars)
+	dbType := checkVariable("BUILDER_BACKUP_IMAGE_TYPE", variables.GetEnv("BUILDER_BACKUP_IMAGE_TYPE", "mariadb"), vars)
 	debug, _ := strconv.ParseBool(debugStr)
 	build := Builder{
 		DockerComposeServiceName:      checkVariable("BUILDER_DOCKER_COMPOSE_SERVICE_NAME", variables.GetEnv("BUILDER_DOCKER_COMPOSE_SERVICE_NAME", "mariadb"), vars),
 		FixedDockerComposeServiceName: fixServiceName(checkVariable("BUILDER_DOCKER_COMPOSE_SERVICE_NAME", variables.GetEnv("BUILDER_DOCKER_COMPOSE_SERVICE_NAME", "mariadb"), vars)),
-		SourceImageName:               checkVariable("BUILDER_IMAGE_NAME", variables.GetEnv("BUILDER_IMAGE_NAME", "mariadb:10.6"), vars),
-		CleanImageName:                checkVariable("BUILDER_CLEAN_IMAGE_NAME", variables.GetEnv("BUILDER_CLEAN_IMAGE_NAME", "uselagoon/mariadb-10.6-drupal:latest"), vars),
 		ResultImageName:               checkVariable("BUILDER_BACKUP_IMAGE_NAME", variables.GetEnv("BUILDER_BACKUP_IMAGE_NAME", "${project}/${environment}"), vars),
 		ResultImageTag:                checkVariable("BUILDER_BACKUP_IMAGE_TAG", variables.GetEnv("BUILDER_BACKUP_IMAGE_TAG", ""), vars),
-		ResultImageDatabaseName:       checkVariable("BUILDER_BACKUP_IMAGE_DATABASE_NAME", variables.GetEnv("BUILDER_BACKUP_IMAGE_DATABASE_NAME", ""), vars),
 		RegistryUsername:              checkVariable("BUILDER_REGISTRY_USERNAME", variables.GetEnv("BUILDER_REGISTRY_USERNAME", ""), vars),
 		RegistryPassword:              checkVariable("BUILDER_REGISTRY_PASSWORD", variables.GetEnv("BUILDER_REGISTRY_PASSWORD", ""), vars),
 		RegistryHost:                  checkVariable("BUILDER_REGISTRY_HOST", variables.GetEnv("BUILDER_REGISTRY_HOST", ""), vars),
@@ -58,7 +57,18 @@ func generateBuildValues(vars []variables.LagoonEnvironmentVariable) Builder {
 		DockerHost:                    checkVariable("BUILDER_DOCKER_HOST", variables.GetEnv("BUILDER_DOCKER_HOST", "docker-host.lagoon-image-builder.svc"), vars),
 		PushTags:                      checkVariable("BUILDER_PUSH_TAGS", variables.GetEnv("BUILDER_PUSH_TAGS", "both"), vars),
 		MTKYAML:                       checkVariable("BUILDER_MTK_YAML_BASE64", variables.GetEnv("BUILDER_MTK_YAML_BASE64", ""), vars),
+		DatabaseType:                  dbType,
 		Debug:                         debug,
+	}
+	switch dbType {
+	case "mariadb":
+		build.SourceImageName = checkVariable("BUILDER_IMAGE_NAME", variables.GetEnv("BUILDER_IMAGE_NAME", "mariadb:10.6"), vars)
+		build.CleanImageName = checkVariable("BUILDER_CLEAN_IMAGE_NAME", variables.GetEnv("BUILDER_CLEAN_IMAGE_NAME", "uselagoon/mariadb-10.6-drupal:latest"), vars)
+		build.ResultImageDatabaseName = checkVariable("BUILDER_BACKUP_IMAGE_DATABASE_NAME", variables.GetEnv("BUILDER_BACKUP_IMAGE_DATABASE_NAME", "drupal"), vars)
+	case "mysql":
+		build.SourceImageName = checkVariable("BUILDER_IMAGE_NAME", variables.GetEnv("BUILDER_IMAGE_NAME", "mysql:8.0.41-oracle"), vars)
+		build.CleanImageName = checkVariable("BUILDER_CLEAN_IMAGE_NAME", variables.GetEnv("BUILDER_CLEAN_IMAGE_NAME", "uselagoon/mysql-8.0:latest"), vars)
+		build.ResultImageDatabaseName = checkVariable("BUILDER_BACKUP_IMAGE_DATABASE_NAME", variables.GetEnv("BUILDER_BACKUP_IMAGE_DATABASE_NAME", "lagoon"), vars)
 	}
 	return build
 }
@@ -159,12 +169,12 @@ func imagePatternParser(pattern string, build Builder) string {
 }
 
 // Replaces two of the same special character in a row with a single instance, because otherwise DockerHub will reject it
-// Inspired by https://stackoverflow.com/questions/59442559/how-to-compare-a-character-with-the-next-one-in-the-same-string 
+// Inspired by https://stackoverflow.com/questions/59442559/how-to-compare-a-character-with-the-next-one-in-the-same-string
 func replaceDoubleSpecial(source string) string {
 	var destination string
 	lastSpecial := false
 	for sourcecount, c := range source {
-		if ! isAlphaNumeric(c) && ! dockerHubSpecial(c) {
+		if !isAlphaNumeric(c) && !dockerHubSpecial(c) {
 			continue // Don't copy if it isn't an allowed character
 		}
 		if sourcecount > 0 && dockerHubSpecial(c) && lastSpecial {
@@ -187,4 +197,3 @@ func isAlphaNumeric(c rune) bool {
 func dockerHubSpecial(c rune) bool {
 	return (c == '.') || (c == '_') || (c == '-') || (c == '/')
 }
-
