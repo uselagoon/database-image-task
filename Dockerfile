@@ -77,6 +77,7 @@ COPY mariadb-image-builder /usr/local/bin/mariadb-image-builder
 WORKDIR /builder
 
 COPY builder/mariadb.Dockerfile /builder/mariadb.Dockerfile
+COPY builder/mysql.Dockerfile /builder/mysql.Dockerfile
 COPY builder/my.cnf.tpl /builder/my.cnf.tpl
 COPY builder/import.my.cnf.tpl /builder/import.my.cnf.tpl
 

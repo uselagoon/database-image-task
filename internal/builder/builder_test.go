@@ -45,12 +45,14 @@ func Test_generateValues(t *testing.T) {
 				FixedDockerComposeServiceName: "MARIADB",
 				SourceImageName:               "mariadb:10.6",
 				CleanImageName:                "uselagoon/mariadb-10.6-drupal:latest",
+				ResultImageDatabaseName:       "drupal",
 				ResultImageName:               "lagpro/lagenv",
 				DockerHost:                    "docker-host.lagoon-image-builder.svc",
 				PushTags:                      "both",
 				RegistryUsername:              "reguser",
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
+				DatabaseType:                  "mariadb",
 				MTK: MTK{
 					Host:     "dbhost",
 					Username: "dbuser",
@@ -84,12 +86,14 @@ func Test_generateValues(t *testing.T) {
 				FixedDockerComposeServiceName: "MARIADB",
 				SourceImageName:               "mariadb:10.6",
 				CleanImageName:                "uselagoon/mariadb-10.6-drupal:latest",
+				ResultImageDatabaseName:       "drupal",
 				ResultImageName:               "reghost/mariadb-data",
 				DockerHost:                    "docker-host.lagoon-image-builder.svc",
 				PushTags:                      "both",
 				RegistryUsername:              "reguser",
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
+				DatabaseType:                  "mariadb",
 				MTK: MTK{
 					Host:     "dbhost",
 					Username: "dbuser",
@@ -124,12 +128,14 @@ func Test_generateValues(t *testing.T) {
 				FixedDockerComposeServiceName: "MARIADB",
 				SourceImageName:               "mariadb:10.6",
 				CleanImageName:                "uselagoon/mariadb-10.6-drupal:latest",
+				ResultImageDatabaseName:       "drupal",
 				ResultImageName:               "reghost/mariadb-data",
 				DockerHost:                    "docker-host.lagoon-image-builder.svc",
 				PushTags:                      "both",
 				RegistryUsername:              "reguser",
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
+				DatabaseType:                  "mariadb",
 				MTK: MTK{
 					Host:     "dbrrhost1",
 					Username: "dbuser",
@@ -167,12 +173,14 @@ func Test_generateValues(t *testing.T) {
 				FixedDockerComposeServiceName: "MARIADB",
 				SourceImageName:               "mariadb:10.6",
 				CleanImageName:                "uselagoon/mariadb-10.6-drupal:latest",
+				ResultImageDatabaseName:       "drupal",
 				ResultImageName:               "reghost/mariadb-data",
 				DockerHost:                    "docker-host.lagoon-image-builder.svc",
 				PushTags:                      "both",
 				RegistryUsername:              "reguser",
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
+				DatabaseType:                  "mariadb",
 				MTK: MTK{
 					Host:     "dbhostcentral",
 					Username: "dbusercentral",
@@ -207,12 +215,14 @@ func Test_generateValues(t *testing.T) {
 				FixedDockerComposeServiceName: "MARIADB",
 				SourceImageName:               "mariadb:10.6",
 				CleanImageName:                "uselagoon/mariadb-10.6-drupal:latest",
+				ResultImageDatabaseName:       "drupal",
 				ResultImageName:               "reghost/mariadb-data",
 				DockerHost:                    "docker-host.lagoon-image-builder.svc",
 				PushTags:                      "both",
 				RegistryUsername:              "reguser",
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
+				DatabaseType:                  "mariadb",
 				MTK: MTK{
 					Host:     "dbrrhost1",
 					Username: "mariadbuser",
@@ -246,6 +256,7 @@ func Test_generateValues(t *testing.T) {
 				FixedDockerComposeServiceName: "MARIADB",
 				SourceImageName:               "mariadb:10.6",
 				CleanImageName:                "uselagoon/mariadb-10.6-drupal:latest",
+				ResultImageDatabaseName:       "drupal",
 				ResultImageName:               "lagpro/lagenv",
 				DockerHost:                    "docker-host.lagoon-image-builder.svc",
 				PushTags:                      "both",
@@ -253,6 +264,48 @@ func Test_generateValues(t *testing.T) {
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
 				Debug:                         true,
+				DatabaseType:                  "mariadb",
+				MTK: MTK{
+					Host:     "dbhost",
+					Username: "dbuser",
+					Password: "dbpass",
+					Database: "dbname",
+				},
+			},
+		},
+		{
+			name:        "test7",
+			description: "same as test1 except mysql",
+			args: args{
+				envVars: []variables.LagoonEnvironmentVariable{
+					{Name: "BUILDER_BACKUP_IMAGE_TYPE", Value: "mysql", Scope: "global"},
+					{Name: "BUILDER_DOCKER_COMPOSE_SERVICE_NAME", Value: "mariadb", Scope: "global"},
+					{Name: "BUILDER_REGISTRY_USERNAME", Value: "reguser", Scope: "global"},
+					{Name: "BUILDER_REGISTRY_PASSWORD", Value: "regpass", Scope: "global"},
+					{Name: "BUILDER_REGISTRY_HOST", Value: "reghost", Scope: "global"},
+					{Name: "BUILDER_MTK_DUMP_HOSTNAME", Value: "dbhost", Scope: "global"},
+					{Name: "BUILDER_MTK_DUMP_USERNAME", Value: "dbuser", Scope: "global"},
+					{Name: "BUILDER_MTK_DUMP_PASSWORD", Value: "dbpass", Scope: "global"},
+					{Name: "BUILDER_MTK_DUMP_DATABASE", Value: "dbname", Scope: "global"},
+				},
+				setVars: []EnvironmentVariable{
+					{Name: "LAGOON_PROJECT", Value: "lagpro"},
+					{Name: "LAGOON_ENVIRONMENT", Value: "lagenv"},
+				},
+			},
+			want: Builder{
+				DockerComposeServiceName:      "mariadb",
+				FixedDockerComposeServiceName: "MARIADB",
+				SourceImageName:               "mysql:8.0.41-oracle",
+				CleanImageName:                "uselagoon/mysql-8.0:latest",
+				ResultImageDatabaseName:       "lagoon",
+				ResultImageName:               "lagpro/lagenv",
+				DockerHost:                    "docker-host.lagoon-image-builder.svc",
+				PushTags:                      "both",
+				RegistryUsername:              "reguser",
+				RegistryPassword:              "regpass",
+				RegistryHost:                  "reghost",
+				DatabaseType:                  "mysql",
 				MTK: MTK{
 					Host:     "dbhost",
 					Username: "dbuser",
@@ -299,10 +352,10 @@ func Test_imagePatternParser(t *testing.T) {
 		setVars []EnvironmentVariable
 	}
 	tests := []struct {
-		name string
+		name        string
 		description string
-		args args
-		want string
+		args        args
+		want        string
 	}{
 		{
 			name: "test1",
@@ -376,7 +429,7 @@ func Test_imagePatternParser(t *testing.T) {
 			want: "reghost/lagpro/mariadb-data",
 		},
 		{
-			name: "test4",
+			name:        "test4",
 			description: "Check whether $database works",
 			args: args{
 				pattern: "${organization}/database-mysql-${project}-${environment}-${database}",
@@ -393,7 +446,7 @@ func Test_imagePatternParser(t *testing.T) {
 					RegistryHost:                  "reghost",
 					RegistryOrganization:          "regorg",
 					MTK: MTK{
-						Database:		"test_database_name",
+						Database: "test_database_name",
 					},
 				},
 				setVars: []EnvironmentVariable{
@@ -404,7 +457,7 @@ func Test_imagePatternParser(t *testing.T) {
 			want: "regorg/database-mysql-lagpro-lagenv-test_database_name",
 		},
 		{
-			name: "test5",
+			name:        "test5",
 			description: "Check whether removal of double special characters works",
 			args: args{
 				pattern: "${organization}/database-mysql-${project}-${environment}-${database}",
@@ -421,7 +474,7 @@ func Test_imagePatternParser(t *testing.T) {
 					RegistryHost:                  "reghost",
 					RegistryOrganization:          "regorg",
 					MTK: MTK{
-						Database:		"test_database__name!!",
+						Database: "test_database__name!!",
 					},
 				},
 				setVars: []EnvironmentVariable{
