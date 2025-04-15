@@ -6,18 +6,22 @@ ARG IMAGE_REPO
 FROM golang:${GO_VER:-1.23}-alpine3.20 AS golang
 
 # build MTK
-ARG MTK_VERSION
-ENV MTK_VERSION=v2.1.1
+ARG MTK_GITHUB_BASE_PATH=github.com/skpr
+ARG MTK_GITHUB_PROJECT_PATH=mtk
+ARG MTK_VERSION=v2.1.1
 
-WORKDIR /go/src/github.com/skpr
+WORKDIR /go/src/${MTK_GITHUB_BASE_PATH}
 RUN apk add --virtual --update-cache git && \
 	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/*
-ADD https://github.com/skpr/mtk.git#$MTK_VERSION ./mtk
+ADD https://${MTK_GITHUB_BASE_PATH}/${MTK_GITHUB_PROJECT_PATH}.git#${MTK_VERSION} ./mtk
 
-WORKDIR /go/src/github.com/skpr/mtk
+WORKDIR /go/src/${MTK_GITHUB_BASE_PATH}/${MTK_GITHUB_PROJECT_PATH}
 
 # compile
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} go build -a -o bin/mtk-dump github.com/skpr/mtk/cmd/mtk
+RUN echo "replace github.com/skpr/mtk => ./mtk" >> go.mod
+RUN go mod tidy
+RUN go mod vendor
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} go build -a -o bin/mtk-dump ./cmd/mtk
 
 # build database-image-task
 WORKDIR /app
@@ -52,10 +56,14 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 FROM ${IMAGE_REPO:-uselagoon}/commons AS commons
 
+ARG MTK_GITHUB_BASE_PATH=github.com/skpr
+ARG MTK_GITHUB_PROJECT_PATH=mtk
+ARG MTK_VERSION=v2.1.1
+
 # Put in some labels so people know what this image is for
 LABEL org.opencontainers.image.authors="The Lagoon Authors" maintainer="The Lagoon Authors"
 
-COPY --from=golang /go/src/github.com/skpr/mtk/bin/mtk-dump /usr/local/bin/mtk-dump
+COPY --from=golang /go/src/${MTK_GITHUB_BASE_PATH}/${MTK_GITHUB_PROJECT_PATH}/bin/mtk-dump /usr/local/bin/mtk-dump
 COPY --from=golang /app/database-image-task /usr/local/bin/database-image-task
 
 # Install necessary packages
