@@ -6,15 +6,16 @@ ARG IMAGE_REPO
 FROM golang:${GO_VER:-1.23}-alpine3.20 AS golang
 
 # build MTK
+ARG MTK_REPOSITORY
 ARG MTK_VERSION
-ENV MTK_VERSION=v2.1.1
+ENV MTK_VERSION=${MTK_VERSION:-v2.1.1}
+ENV MTK_REPOSITORY=${MTK_REPOSITORY:-https://github.com/skpr/mtk.git}
 
-WORKDIR /go/src/github.com/skpr
 RUN apk add --virtual --update-cache git && \
 	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/*
-ADD https://github.com/skpr/mtk.git#$MTK_VERSION ./mtk
+ADD $MTK_REPOSITORY#$MTK_VERSION /go/src/mtk
 
-WORKDIR /go/src/github.com/skpr/mtk
+WORKDIR /go/src/mtk
 
 # compile
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} go build -a -o bin/mtk-dump github.com/skpr/mtk/cmd/mtk
@@ -55,7 +56,7 @@ FROM ${IMAGE_REPO:-uselagoon}/commons AS commons
 # Put in some labels so people know what this image is for
 LABEL org.opencontainers.image.authors="The Lagoon Authors" maintainer="The Lagoon Authors"
 
-COPY --from=golang /go/src/github.com/skpr/mtk/bin/mtk-dump /usr/local/bin/mtk-dump
+COPY --from=golang /go/src/mtk/bin/mtk-dump /usr/local/bin/mtk-dump
 COPY --from=golang /app/database-image-task /usr/local/bin/database-image-task
 
 # Install necessary packages
