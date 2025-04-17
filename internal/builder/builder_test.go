@@ -314,6 +314,49 @@ func Test_generateValues(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "test8",
+			description: "same as test2 except image tag with pattern",
+			args: args{
+				envVars: []variables.LagoonEnvironmentVariable{
+					{Name: "BUILDER_DOCKER_COMPOSE_SERVICE_NAME", Value: "mariadb", Scope: "global"},
+					{Name: "BUILDER_BACKUP_IMAGE_NAME", Value: "${registry}/${service}-data", Scope: "global"},
+					{Name: "BUILDER_BACKUP_IMAGE_TAG", Value: "${environment}", Scope: "global"},
+					{Name: "BUILDER_REGISTRY_USERNAME", Value: "reguser", Scope: "global"},
+					{Name: "BUILDER_REGISTRY_PASSWORD", Value: "regpass", Scope: "global"},
+					{Name: "BUILDER_REGISTRY_HOST", Value: "reghost", Scope: "global"},
+					{Name: "BUILDER_MTK_HOSTNAME", Value: "dbhost", Scope: "global"},
+					{Name: "BUILDER_MTK_USERNAME", Value: "dbuser", Scope: "global"},
+					{Name: "BUILDER_MTK_PASSWORD", Value: "dbpass", Scope: "global"},
+					{Name: "BUILDER_MTK_DATABASE", Value: "dbname", Scope: "global"},
+				},
+				setVars: []EnvironmentVariable{
+					{Name: "LAGOON_PROJECT", Value: "lagpro"},
+					{Name: "LAGOON_ENVIRONMENT", Value: "lagenv"},
+				},
+			},
+			want: Builder{
+				DockerComposeServiceName:      "mariadb",
+				FixedDockerComposeServiceName: "MARIADB",
+				SourceImageName:               "mariadb:10.6",
+				CleanImageName:                "uselagoon/mariadb-10.6-drupal:latest",
+				ResultImageDatabaseName:       "drupal",
+				ResultImageName:               "reghost/mariadb-data",
+				ResultImageTag:                "lagenv",
+				DockerHost:                    "docker-host.lagoon-image-builder.svc",
+				PushTags:                      "both",
+				RegistryUsername:              "reguser",
+				RegistryPassword:              "regpass",
+				RegistryHost:                  "reghost",
+				DatabaseType:                  "mariadb",
+				MTK: MTK{
+					Host:     "dbhost",
+					Username: "dbuser",
+					Password: "dbpass",
+					Database: "dbname",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		envvars, _ := json.Marshal(tt.args.envVars)

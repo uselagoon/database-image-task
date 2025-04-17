@@ -118,6 +118,7 @@ func generateValues() (Builder, error) {
 	}
 	build.MTK = mtk
 	build.ResultImageName = imagePatternParser(build.ResultImageName, build)
+	build.ResultImageTag = imagePatternParser(build.ResultImageTag, build)
 	return build, nil
 }
 
