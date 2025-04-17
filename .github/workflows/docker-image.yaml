@@ -82,7 +82,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            MTK_VERSION=$mtk_version
             "VERSION=${{ env.VERSION }}"
             "BUILD=${{ env.BUILD }}"
             "GO_VER=${{ matrix.goversion }}"
