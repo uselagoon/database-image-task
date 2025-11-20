@@ -6,6 +6,8 @@ echo "======================="
 
 echo
 echo "=== Phase 1: variable setup ==="
+echo "Current time: $(date +"%Y-%m-%d %H:%M:%S")"
+echo
 
 # source the variables required
 IMAGE_BUILD_DATA=$(database-image-task dump)
@@ -54,6 +56,8 @@ echo backup_image_tag=$backup_image_tag
 
 echo
 echo "=== Phase 2: MTK dump ==="
+echo "Current time: $(date +"%Y-%m-%d %H:%M:%S")"
+echo
 
 # dump the MTK YAML to the mtk file if it has been provided, otherwise mtk will just dump the entire database as is
 if [ -n "$(echo "$IMAGE_BUILD_DATA" | jq -c '.mtkYAML')" ]; then
@@ -84,6 +88,8 @@ fi
 
 echo
 echo "=== Phase 3: Make container with sanitised DB ==="
+echo "Current time: $(date +"%Y-%m-%d %H:%M:%S")"
+echo
 
 ## using docker-host in lagoon, perhaps use a different dockerhost for this
 export DOCKER_HOST=$(echo "$IMAGE_BUILD_DATA" | jq -rc '.dockerHost')
@@ -130,6 +136,8 @@ set +o errexit
 
 echo
 echo "=== Phase 4: Save new container to registry ==="
+echo "Current time: $(date +"%Y-%m-%d %H:%M:%S")"
+echo
 
 # Log in to dockerhub or other registry
 
@@ -147,10 +155,16 @@ BUILDER_PUSH_TAGS=$(echo "$IMAGE_BUILD_DATA" | jq -rc '.pushTags')
 # Push the image to remote
 if [ "$BUILDER_PUSH_TAGS" == "both" ] || [ "$BUILDER_PUSH_TAGS" == "latest" ]; then
 	docker push "${BUILDER_BACKUP_IMAGE_NAME}:latest"
+	if [ "$BUILDER_REMOVE_IMAGE" != "skip" ]; then
+		docker rmi --force "${BUILDER_BACKUP_IMAGE_NAME}:latest"
+	fi
 fi
 
 if [ "$BUILDER_PUSH_TAGS" == "both" ] || [ "$BUILDER_PUSH_TAGS" == "default" ]; then
 	docker push "${backup_image_full}"
+	if [ "$BUILDER_REMOVE_IMAGE" != "skip" ]; then
+		docker rmi --force "${backup_image_full}"
+	fi
 fi
 
 echo
