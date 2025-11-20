@@ -1,11 +1,29 @@
 #!/bin/bash
 
+function finalizeBuildStep() {
+  [ "$1" ] || return #total start time
+  [ "$2" ] || return #step start time
+  [ "$3" ] || return #previous step end time
+  [ "$4" ] || return #buildstep
+  totalStartTime=$(date -d "${1}" +%s)
+  startTime=$(date -d "${2}" +%s)
+  endTime=$(date -d "${3}" +%s)
+  timeZone=$(date +"%Z")
+  diffSeconds="$(($endTime-$startTime))"
+  diffTime=$(date -d @${diffSeconds} +"%H:%M:%S" -u)
+  diffTotalSeconds="$(($endTime-$totalStartTime))"
+  diffTotalTime=$(date -d @${diffTotalSeconds} +"%H:%M:%S" -u)
+  echo -e "##############################################\nSTEP ${4}: Completed at ${3} (${timeZone}) Duration ${diffTime} Elapsed ${diffTotalTime}\n##############################################"
+}
+
+buildStartTime="$(date +"%Y-%m-%d %H:%M:%S")"
+
 echo "======================="
 echo "Starting image-builder"
 echo "======================="
 
 echo
-echo "=== Phase 1: variable setup ==="
+echo -e "##############################################\nBEGIN Variable setup\n##############################################"
 echo "Current time: $(date +"%Y-%m-%d %H:%M:%S")"
 echo
 
@@ -54,8 +72,10 @@ echo backup_image_tag=$backup_image_tag
 
 ##### Phase 2: MTK dump
 
-echo
-echo "=== Phase 2: MTK dump ==="
+currentStepEnd="$(date +"%Y-%m-%d %H:%M:%S")"
+finalizeBuildStep "${buildStartTime}" "${previousStepEnd}" "${currentStepEnd}" "Variable setup"
+previousStepEnd=${currentStepEnd}
+echo -e "##############################################\nBEGIN Database dump\n##############################################"
 echo "Current time: $(date +"%Y-%m-%d %H:%M:%S")"
 echo
 
@@ -87,7 +107,10 @@ fi
 ##### Phase 3: Make container with sanitised DB
 
 echo
-echo "=== Phase 3: Make container with sanitised DB ==="
+currentStepEnd="$(date +"%Y-%m-%d %H:%M:%S")"
+finalizeBuildStep "${buildStartTime}" "${previousStepEnd}" "${currentStepEnd}" "Database dump"
+previousStepEnd=${currentStepEnd}
+echo -e "##############################################\nBEGIN Make container with sanitised DB\n##############################################"
 echo "Current time: $(date +"%Y-%m-%d %H:%M:%S")"
 echo
 
@@ -135,7 +158,10 @@ set +o errexit
 ##### Phase 4: Save new container to registry
 
 echo
-echo "=== Phase 4: Save new container to registry ==="
+currentStepEnd="$(date +"%Y-%m-%d %H:%M:%S")"
+finalizeBuildStep "${buildStartTime}" "${previousStepEnd}" "${currentStepEnd}" "Make container with sanitised DB"
+previousStepEnd=${currentStepEnd}
+echo -e "##############################################\nBEGIN Save new container to registry\n##############################################"
 echo "Current time: $(date +"%Y-%m-%d %H:%M:%S")"
 echo
 
@@ -171,4 +197,6 @@ echo
 echo "========================"
 echo "Finishing image-builder"
 echo "========================"
+currentStepEnd="$(date +"%Y-%m-%d %H:%M:%S")"
+finalizeBuildStep "${buildStartTime}" "${previousStepEnd}" "${currentStepEnd}" "Save new container to registry"
 
