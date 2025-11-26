@@ -14,6 +14,8 @@ ENV MARIADB_DATABASE=drupal \
     MARIADB_PASSWORD=drupal
 
 COPY sanitised-dump.sql /docker-entrypoint-initdb.d/
+COPY mariadb-import.sh /import.sh
+RUN chmod +x /import.sh
 
 # Need to change the datadir to something else that /var/lib/mysql because the parent docker file defines it as a volume.
 # https://docs.docker.com/engine/reference/builder/#volume :
@@ -21,10 +23,7 @@ COPY sanitised-dump.sql /docker-entrypoint-initdb.d/
 #       it has been declared, those changes will be discarded.
 # capture only the last 3 lines of this output to help with debugging. capturing more than this has potential to leak data
 # in the output
-RUN /usr/local/bin/docker-entrypoint.sh mysqld \
-    --max-allowed-packet=1G \
-    --datadir /initialized-db \
-    --aria-log-dir-path /initialized-db | tail -n 3
+RUN /import.sh
 
 #  create the `.my.cnf` that the lagoon mariadb images use
 # apply the permissions in the builder image before transferring to the clean image

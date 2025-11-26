@@ -174,8 +174,9 @@ echo
 # BUILDER_REGISTRY_USERNAME is the name to log in to the registry
 # BUILDER_REGISTRY_PASSWORD is the password of the user
 # BUILDER_REGISTRY_HOST is required if not using dockerhub, eg: `quay.io`
-
+set -o errexit
 echo $(echo "$IMAGE_BUILD_DATA" | jq -rc '.registryPassword') | docker login $(echo "$IMAGE_BUILD_DATA" | jq -rc '.registryHost') -u "$(echo "$IMAGE_BUILD_DATA" | jq -rc '.registryUsername')" --password-stdin
+set +o errexit
 
 BUILDER_PUSH_TAGS=$(echo "$IMAGE_BUILD_DATA" | jq -rc '.pushTags')
 # Push the image to remote
