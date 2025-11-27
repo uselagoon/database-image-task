@@ -80,6 +80,8 @@ COPY builder/mariadb.Dockerfile /builder/mariadb.Dockerfile
 COPY builder/mysql.Dockerfile /builder/mysql.Dockerfile
 COPY builder/my.cnf.tpl /builder/my.cnf.tpl
 COPY builder/import.my.cnf.tpl /builder/import.my.cnf.tpl
+COPY builder/mariadb-import.sh /builder/mariadb-import.sh
+COPY builder/mysql-import.sh /builder/mysql-import.sh
 
 RUN chmod a+x /usr/local/bin/mariadb-image-builder /usr/local/bin/mtk-dump /usr/local/bin/image-builder-entry /usr/local/bin/database-image-task
 
