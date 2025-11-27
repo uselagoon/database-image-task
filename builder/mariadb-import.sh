@@ -1,6 +1,9 @@
 #!/bin/bash
 
 /usr/local/bin/docker-entrypoint.sh mysqld \
+    --innodb-buffer-pool-size=2G \
+    --innodb-sort-buffer-size=128M \
+    --bulk-insert-buffer-size=256M \
     --max-allowed-packet=1G \
     --datadir /initialized-db \
     --aria-log-dir-path /initialized-db > /tmp/output.log 2>&1
