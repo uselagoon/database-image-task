@@ -29,6 +29,7 @@ type Builder struct {
 	DockerHost                    string `json:"dockerHost"`
 	PushTags                      string `json:"pushTags"`
 	MTKYAML                       string `json:"mtkYAML"`
+	ExtendedInsertRows            string `json:"extendedInsertRows"`
 	DatabaseType                  string `json:"databaseType"`
 	Debug                         bool   `json:"debug,omitemtpy"`
 	MTK                           MTK    `json:"mtk"`
@@ -57,6 +58,7 @@ func generateBuildValues(vars []variables.LagoonEnvironmentVariable) Builder {
 		DockerHost:                    checkVariable("BUILDER_DOCKER_HOST", variables.GetEnv("BUILDER_DOCKER_HOST", "docker-host.lagoon-image-builder.svc"), vars),
 		PushTags:                      checkVariable("BUILDER_PUSH_TAGS", variables.GetEnv("BUILDER_PUSH_TAGS", "both"), vars),
 		MTKYAML:                       checkVariable("BUILDER_MTK_YAML_BASE64", variables.GetEnv("BUILDER_MTK_YAML_BASE64", ""), vars),
+		ExtendedInsertRows:            checkVariable("MTK_EXTENDED_INSERT_ROWS", variables.GetEnv("MTK_EXTENDED_INSERT_ROWS", ""), vars),
 		DatabaseType:                  dbType,
 		Debug:                         debug,
 	}
