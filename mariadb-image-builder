@@ -93,6 +93,10 @@ if [ "$DEBUG" == "true" ]; then
 	echo
 	set +o xtrace
 fi
+
+if [ -n "$(echo "$IMAGE_BUILD_DATA" | jq -c '.extendedInsertRows')" ]; then
+	export MTK_EXTENDED_INSERT_ROWS=$(echo "$IMAGE_BUILD_DATA" | jq -rc '.extendedInsertRows')
+fi
 mtk-dump dump "$MTK_DATABASE" > "$san_db_dump_filename"
 mtk_return_value=$?
 if [ "$DEBUG" == "true" ]; then
