@@ -4,6 +4,9 @@
     --innodb-buffer-pool-size=2G \
     --innodb-sort-buffer-size=128M \
     --bulk-insert-buffer-size=256M \
+    --innodb-buffer-pool-instances=4 \
+    --innodb-read-io-threads=4 \
+    --innodb-write-io-threads=4 \
     --max-allowed-packet=1G \
     --datadir /initialized-db \
     --aria-log-dir-path /initialized-db > /tmp/output.log 2>&1
