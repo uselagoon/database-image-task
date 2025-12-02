@@ -58,7 +58,7 @@ func generateBuildValues(vars []variables.LagoonEnvironmentVariable) Builder {
 		DockerHost:                    checkVariable("BUILDER_DOCKER_HOST", variables.GetEnv("BUILDER_DOCKER_HOST", "docker-host.lagoon-image-builder.svc"), vars),
 		PushTags:                      checkVariable("BUILDER_PUSH_TAGS", variables.GetEnv("BUILDER_PUSH_TAGS", "both"), vars),
 		MTKYAML:                       checkVariable("BUILDER_MTK_YAML_BASE64", variables.GetEnv("BUILDER_MTK_YAML_BASE64", ""), vars),
-		ExtendedInsertRows:            checkVariable("MTK_EXTENDED_INSERT_ROWS", variables.GetEnv("MTK_EXTENDED_INSERT_ROWS", ""), vars),
+		ExtendedInsertRows:            checkVariable("BUILDER_MTK_EXTENDED_INSERT_ROWS", variables.GetEnv("BUILDER_MTK_EXTENDED_INSERT_ROWS", ""), vars),
 		DatabaseType:                  dbType,
 		Debug:                         debug,
 	}
