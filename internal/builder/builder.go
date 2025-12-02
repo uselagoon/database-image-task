@@ -29,9 +29,9 @@ type Builder struct {
 	DockerHost                    string `json:"dockerHost"`
 	PushTags                      string `json:"pushTags"`
 	MTKYAML                       string `json:"mtkYAML"`
-	ExtendedInsertRows            string `json:"extendedInsertRows"`
+	ExtendedInsertRows            string `json:"extendedInsertRows,omitempty"`
 	DatabaseType                  string `json:"databaseType"`
-	Debug                         bool   `json:"debug,omitemtpy"`
+	Debug                         bool   `json:"debug,omitempty"`
 	MTK                           MTK    `json:"mtk"`
 }
 
