@@ -82,7 +82,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            MTK_VERSION=$mtk_version
+            MTK_VERSION=fix-string-types
+            MTK_REPOSITORY=https://github.com/tnelson-doghouse/mtk.git
             "VERSION=${{ env.VERSION }}"
             "BUILD=${{ env.BUILD }}"
             "GO_VER=${{ matrix.goversion }}"
