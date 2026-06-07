@@ -142,18 +142,49 @@ done
 # these have to be the same base `mariadb/mysql` version to work (ie mariadb:10.6 as the builder, and uselagoon/mariadb-10.6-drupal:latest as the clean resulting image)
 
 
-# build the image, but exit on error
+BUILDER_PLATFORMS=$(echo "$IMAGE_BUILD_DATA" | jq -rc '.platforms')
+BUILDER_PUSH_TAGS=$(echo "$IMAGE_BUILD_DATA" | jq -rc '.pushTags')
+
+# Log in to the registry before building; buildx pushes during the build for multi-arch manifests.
+# Reading credentials order is:
+# -	${XDG_RUNTIME_DIR}/containers/auth.json (and writing)
+# -	$HOME/.docker/config.json
+set -o errexit
+echo $(echo "$IMAGE_BUILD_DATA" | jq -rc '.registryPassword') | docker login $(echo "$IMAGE_BUILD_DATA" | jq -rc '.registryHost') -u "$(echo "$IMAGE_BUILD_DATA" | jq -rc '.registryUsername')" --password-stdin
+
+build_tags=()
+if [ "$BUILDER_PUSH_TAGS" == "both" ] || [ "$BUILDER_PUSH_TAGS" == "latest" ]; then
+	build_tags+=(-t "${BUILDER_BACKUP_IMAGE_NAME}:latest")
+fi
+if [ "$BUILDER_PUSH_TAGS" == "both" ] || [ "$BUILDER_PUSH_TAGS" == "default" ]; then
+	build_tags+=(-t "${backup_image_full}")
+fi
+if [ ${#build_tags[@]} -eq 0 ]; then
+	echo "No tags configured to push (BUILDER_PUSH_TAGS=${BUILDER_PUSH_TAGS})"
+	exit 1
+fi
+
+# Ensure a buildx builder exists on the remote docker host for multi-platform builds.
+if ! docker buildx inspect lagoon-multiarch >/dev/null 2>&1; then
+	docker buildx create --name lagoon-multiarch --driver docker-container --use --bootstrap
+else
+	docker buildx use lagoon-multiarch
+fi
+
 if [ "$DEBUG" == "true" ]; then
 	set -o xtrace
 fi
-set -o errexit
 # template out the my.cnf file for the images
 envsubst < my.cnf.tpl > my.cnf
 envsubst < import.my.cnf.tpl > import.my.cnf
-docker build --network=host --build-arg BUILDER_IMAGE="$(echo "$IMAGE_BUILD_DATA" | jq -rc '.sourceImage')" \
+echo "Building and pushing multi-arch image for platforms: ${BUILDER_PLATFORMS}"
+docker buildx build --network=host \
+	--platform "${BUILDER_PLATFORMS}" \
+	--build-arg BUILDER_IMAGE="$(echo "$IMAGE_BUILD_DATA" | jq -rc '.sourceImage')" \
 	--build-arg CLEAN_IMAGE="$(echo "$IMAGE_BUILD_DATA" | jq -rc '.cleanImage')" \
-	-t ${backup_image_full} \
-	-t "${BUILDER_BACKUP_IMAGE_NAME}:latest" .
+	"${build_tags[@]}" \
+	--push \
+	.
 if [ "$DEBUG" == "true" ]; then
 	set +o xtrace
 fi
@@ -168,35 +199,7 @@ previousStepEnd=${currentStepEnd}
 echo -e "##############################################\nBEGIN Save new container to registry\n##############################################"
 echo "Current time: $(date +"%Y-%m-%d %H:%M:%S")"
 echo
-
-# Log in to dockerhub or other registry
-
-# Reading credentials order is:
-# -	${XDG_RUNTIME_DIR}/containers/auth.json (and writing)
-# -	$HOME/.docker/config.json
-
-# BUILDER_REGISTRY_USERNAME is the name to log in to the registry
-# BUILDER_REGISTRY_PASSWORD is the password of the user
-# BUILDER_REGISTRY_HOST is required if not using dockerhub, eg: `quay.io`
-set -o errexit
-echo $(echo "$IMAGE_BUILD_DATA" | jq -rc '.registryPassword') | docker login $(echo "$IMAGE_BUILD_DATA" | jq -rc '.registryHost') -u "$(echo "$IMAGE_BUILD_DATA" | jq -rc '.registryUsername')" --password-stdin
-set +o errexit
-
-BUILDER_PUSH_TAGS=$(echo "$IMAGE_BUILD_DATA" | jq -rc '.pushTags')
-# Push the image to remote
-if [ "$BUILDER_PUSH_TAGS" == "both" ] || [ "$BUILDER_PUSH_TAGS" == "latest" ]; then
-	docker push "${BUILDER_BACKUP_IMAGE_NAME}:latest"
-	if [ "$BUILDER_REMOVE_IMAGE" != "skip" ]; then
-		docker rmi --force "${BUILDER_BACKUP_IMAGE_NAME}:latest"
-	fi
-fi
-
-if [ "$BUILDER_PUSH_TAGS" == "both" ] || [ "$BUILDER_PUSH_TAGS" == "default" ]; then
-	docker push "${backup_image_full}"
-	if [ "$BUILDER_REMOVE_IMAGE" != "skip" ]; then
-		docker rmi --force "${backup_image_full}"
-	fi
-fi
+echo "Multi-arch images pushed during build for platforms: ${BUILDER_PLATFORMS}"
 
 echo
 echo "========================"
