@@ -83,6 +83,9 @@ COPY builder/import.my.cnf.tpl /builder/import.my.cnf.tpl
 COPY builder/mariadb-import.sh /builder/mariadb-import.sh
 COPY builder/mysql-import.sh /builder/mysql-import.sh
 
+RUN find -L "/builder" -exec chgrp 0 {} + && find -L "/builder" -exec chmod g+rwX {} +
+RUN find -L "$HOME/.docker" -exec chgrp 0 {} + && find -L "$HOME/.docker" -exec chmod g+rwX {} +
+
 RUN chmod a+x /usr/local/bin/mariadb-image-builder /usr/local/bin/mtk-dump /usr/local/bin/image-builder-entry /usr/local/bin/database-image-task
 
 # Ensure the syntax is correct bash before actually pushing, etc
