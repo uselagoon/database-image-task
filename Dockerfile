@@ -3,7 +3,7 @@ ARG UPSTREAM_TAG
 ARG GO_VER
 ARG IMAGE_REPO
 
-FROM golang:${GO_VER:-1.23}-alpine3.20 AS golang
+FROM golang:${GO_VER:-1.26}-alpine3.24 AS golang
 
 # build MTK
 ARG MTK_VERSION

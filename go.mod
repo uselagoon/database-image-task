@@ -1,6 +1,6 @@
 module github.com/uselagoon/database-image-task
 
-go 1.23.3
+go 1.26.0
 
 require (
 	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
