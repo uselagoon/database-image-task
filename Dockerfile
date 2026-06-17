@@ -7,7 +7,7 @@ FROM golang:${GO_VER:-1.26}-alpine3.24 AS golang
 
 # build MTK
 ARG MTK_VERSION
-ENV MTK_VERSION=v2.1.1
+ENV MTK_VERSION=v2.3.4
 
 WORKDIR /go/src/github.com/skpr
 RUN apk add --virtual --update-cache git && \
