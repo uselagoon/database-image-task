@@ -34,6 +34,12 @@ mutation createDumpSanitisedDB {
 					optional: true
 				},
 				{
+					name: "BUILDER_PLATFORMS",
+					displayName: "OPTIONAL: Comma-separated platforms for the resulting image (defaults to linux/amd64)",
+					type: STRING
+					optional: true
+				},
+				{
 					name: "BUILDER_MTK_YAML_BASE64",
 					displayName: "OPTIONAL: The base64 encoded value of the mtk dump file to use (defaults to no config)",
 					type: STRING
