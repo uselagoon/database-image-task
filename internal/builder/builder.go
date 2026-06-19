@@ -61,7 +61,7 @@ func generateBuildValues(vars []variables.LagoonEnvironmentVariable) Builder {
 		MTKYAML:                       checkVariable("BUILDER_MTK_YAML_BASE64", variables.GetEnv("BUILDER_MTK_YAML_BASE64", ""), vars),
 		ExtendedInsertRows:            checkVariable("BUILDER_MTK_EXTENDED_INSERT_ROWS", variables.GetEnv("BUILDER_MTK_EXTENDED_INSERT_ROWS", ""), vars),
 		DatabaseType:                  dbType,
-		Platforms:                     checkVariable("BUILDER_PLATFORMS", variables.GetEnv("BUILDER_PLATFORMS", "linux/amd64,linux/arm64"), vars),
+		Platforms:                     checkVariable("BUILDER_PLATFORMS", variables.GetEnv("BUILDER_PLATFORMS", "linux/amd64"), vars),
 		Debug:                         debug,
 	}
 	switch dbType {

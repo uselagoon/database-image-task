@@ -37,7 +37,7 @@ mutation createDumpSanitisedDB {
 				},
 				{
 					name: "BUILDER_PLATFORMS",
-					displayName: "OPTIONAL: Comma-separated platforms for the resulting image (defaults to linux/amd64,linux/arm64)",
+					displayName: "OPTIONAL: Comma-separated platforms for the resulting image (defaults to linux/amd64)",
 					type: STRING
 					optional: true
 				},

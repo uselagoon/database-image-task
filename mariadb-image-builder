@@ -201,6 +201,19 @@ echo "Current time: $(date +"%Y-%m-%d %H:%M:%S")"
 echo
 echo "Multi-arch images pushed during build for platforms: ${BUILDER_PLATFORMS}"
 
+# Clean up pushed images and build cache from the remote docker host to free disk space.
+# BUILDER_REMOVE_IMAGE=skip can be set to retain images for debugging.
+if [ "${BUILDER_REMOVE_IMAGE}" != "skip" ]; then
+	if [ "$BUILDER_PUSH_TAGS" == "both" ] || [ "$BUILDER_PUSH_TAGS" == "latest" ]; then
+		docker rmi --force "${BUILDER_BACKUP_IMAGE_NAME}:latest" 2>/dev/null || true
+	fi
+	if [ "$BUILDER_PUSH_TAGS" == "both" ] || [ "$BUILDER_PUSH_TAGS" == "default" ]; then
+		docker rmi --force "${backup_image_full}" 2>/dev/null || true
+	fi
+	# buildx --push does not load images into the local daemon, but the builder retains cache layers.
+	docker buildx prune --builder lagoon-multiarch -f 2>/dev/null || true
+fi
+
 echo
 echo "========================"
 echo "Finishing image-builder"

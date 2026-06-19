@@ -53,7 +53,7 @@ func Test_generateValues(t *testing.T) {
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
 				DatabaseType:                  "mariadb",
-				Platforms:                     "linux/amd64,linux/arm64",
+				Platforms:                     "linux/amd64",
 				MTK: MTK{
 					Host:     "dbhost",
 					Username: "dbuser",
@@ -95,7 +95,7 @@ func Test_generateValues(t *testing.T) {
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
 				DatabaseType:                  "mariadb",
-				Platforms:                     "linux/amd64,linux/arm64",
+				Platforms:                     "linux/amd64",
 				MTK: MTK{
 					Host:     "dbhost",
 					Username: "dbuser",
@@ -138,7 +138,7 @@ func Test_generateValues(t *testing.T) {
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
 				DatabaseType:                  "mariadb",
-				Platforms:                     "linux/amd64,linux/arm64",
+				Platforms:                     "linux/amd64",
 				MTK: MTK{
 					Host:     "dbrrhost1",
 					Username: "dbuser",
@@ -184,7 +184,7 @@ func Test_generateValues(t *testing.T) {
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
 				DatabaseType:                  "mariadb",
-				Platforms:                     "linux/amd64,linux/arm64",
+				Platforms:                     "linux/amd64",
 				MTK: MTK{
 					Host:     "dbhostcentral",
 					Username: "dbusercentral",
@@ -227,7 +227,7 @@ func Test_generateValues(t *testing.T) {
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
 				DatabaseType:                  "mariadb",
-				Platforms:                     "linux/amd64,linux/arm64",
+				Platforms:                     "linux/amd64",
 				MTK: MTK{
 					Host:     "dbrrhost1",
 					Username: "mariadbuser",
@@ -270,7 +270,7 @@ func Test_generateValues(t *testing.T) {
 				RegistryHost:                  "reghost",
 				Debug:                         true,
 				DatabaseType:                  "mariadb",
-				Platforms:                     "linux/amd64,linux/arm64",
+				Platforms:                     "linux/amd64",
 				MTK: MTK{
 					Host:     "dbhost",
 					Username: "dbuser",
@@ -312,7 +312,7 @@ func Test_generateValues(t *testing.T) {
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
 				DatabaseType:                  "mysql",
-				Platforms:                     "linux/amd64,linux/arm64",
+				Platforms:                     "linux/amd64",
 				MTK: MTK{
 					Host:     "dbhost",
 					Username: "dbuser",
@@ -356,7 +356,7 @@ func Test_generateValues(t *testing.T) {
 				RegistryPassword:              "regpass",
 				RegistryHost:                  "reghost",
 				DatabaseType:                  "mariadb",
-				Platforms:                     "linux/amd64,linux/arm64",
+				Platforms:                     "linux/amd64",
 				MTK: MTK{
 					Host:     "dbhost",
 					Username: "dbuser",
