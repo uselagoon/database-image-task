@@ -180,7 +180,6 @@ echo
 # BUILDER_REGISTRY_HOST is required if not using dockerhub, eg: `quay.io`
 set -o errexit
 echo $(echo "$IMAGE_BUILD_DATA" | jq -rc '.registryPassword') | docker login $(echo "$IMAGE_BUILD_DATA" | jq -rc '.registryHost') -u "$(echo "$IMAGE_BUILD_DATA" | jq -rc '.registryUsername')" --password-stdin
-set +o errexit
 
 BUILDER_PUSH_TAGS=$(echo "$IMAGE_BUILD_DATA" | jq -rc '.pushTags')
 # Push the image to remote
@@ -197,6 +196,7 @@ if [ "$BUILDER_PUSH_TAGS" == "both" ] || [ "$BUILDER_PUSH_TAGS" == "default" ]; 
 		docker rmi --force "${backup_image_full}"
 	fi
 fi
+set +o errexit
 
 echo
 echo "========================"
