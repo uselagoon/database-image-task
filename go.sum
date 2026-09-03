@@ -31,6 +31,8 @@ github.com/uselagoon/machinery v0.0.33 h1:y+otZ5WC4knqpTiV80YbaXY8U3zbCVenf3Gu0B
 github.com/uselagoon/machinery v0.0.33/go.mod h1:G0ujppuNR0BrtAnlmH8xDb9TDfayb4A36aeo0DYg7fQ=
 github.com/uselagoon/machinery v0.0.37 h1:H1I+jQxom9Yxsw7GJi71xLB3AkVDgdMSmTCfe3lxodc=
 github.com/uselagoon/machinery v0.0.37/go.mod h1:UVqIxwF/Q9xO3LQMkQhWeuegpuKcsrxmBa4LE52SiWQ=
+github.com/uselagoon/machinery v0.0.38 h1:cHzvt8MFrUkbk07C4EnV97biktR19Jl6vKi99G+EO1w=
+github.com/uselagoon/machinery v0.0.38/go.mod h1:g89hzA4lCN2Q7p6ARmtJK6HyshWLy5UZX/8U55CcVIs=
 go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
